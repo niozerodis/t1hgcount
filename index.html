@@ -112,27 +112,38 @@
     </div>
 
     <div v-if="showBatchEditModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[60]">
-      <div class="bg-gray-900 border border-yellow-800/50 rounded-3xl w-full max-w-md p-8 shadow-2xl">
+      <div class="bg-gray-900 border border-yellow-800/50 rounded-3xl w-full max-w-lg p-8 shadow-2xl">
         <h2 class="text-xl font-bold mb-2 text-yellow-500">✏️ 批次編輯 {{ selectedIds.length }} 筆項目</h2>
-        <p class="text-xs text-gray-400 mb-6 border-b border-gray-800 pb-4">設定你想要統一修改的欄位，若不修改請保持「不變更」。</p>
+        <p class="text-xs text-gray-400 mb-6 border-b border-gray-800 pb-4">設定你想要統一修改的欄位。<span class="text-red-400">若不修改請保持留白或「不變更」。</span></p>
         
-        <div class="space-y-4">
-          <label class="block"><span class="text-xs text-gray-400">統一修改：購買日</span>
-            <select v-model="batchEditForm.date" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
-              <option value="">-- 不變更 --</option>
-              <option v-for="d in options.dates" :value="d">{{d}}</option>
-            </select>
-          </label>
-          <label class="block"><span class="text-xs text-gray-400">統一修改：購買人</span>
-            <select v-model="batchEditForm.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
-              <option value="">-- 不變更 --</option>
-              <option v-for="p in options.purchasers" :value="p">{{p}}</option>
-            </select>
-          </label>
+        <div class="space-y-5">
+          <div class="grid grid-cols-2 gap-4">
+            <label class="block"><span class="text-xs text-gray-400">統一修改：購買日</span>
+              <select v-model="batchEditForm.date" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
+                <option value="">-- 不變更 --</option>
+                <option v-for="d in options.dates" :value="d">{{d}}</option>
+              </select>
+            </label>
+            <label class="block"><span class="text-xs text-gray-400">統一修改：購買人</span>
+              <select v-model="batchEditForm.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
+                <option value="">-- 不變更 --</option>
+                <option v-for="p in options.purchasers" :value="p">{{p}}</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <label class="block"><span class="text-xs text-gray-400">統一修改：匯率</span>
+              <input type="number" step="0.00001" v-model="batchEditForm.exchangeRate" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
+            </label>
+            <label class="block"><span class="text-xs text-gray-400">統一修改：手續費 (TWD)</span>
+              <input type="number" v-model="batchEditForm.fee" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
+            </label>
+          </div>
         </div>
 
         <div class="mt-8 flex gap-3">
-          <button @click="submitBatchEdit" class="flex-1 bg-yellow-600 p-3 rounded-xl font-bold hover:bg-yellow-700 text-white transition">套用變更</button>
+          <button @click="submitBatchEdit" class="flex-1 bg-yellow-600 p-3 rounded-xl font-bold hover:bg-yellow-700 text-white transition">套用並重新計算台幣</button>
           <button @click="showBatchEditModal = false" class="px-6 py-3 bg-gray-800 rounded-xl font-bold text-gray-300 hover:text-white transition">取消</button>
         </div>
       </div>
@@ -292,7 +303,7 @@
         const batchForm = ref({ date: '', purchaser: '' });
         
         // 批次編輯 Form
-        const batchEditForm = ref({ date: '', purchaser: '' });
+        const batchEditForm = ref({ date: '', purchaser: '', exchangeRate: '', fee: '' });
 
         const form = ref({
           id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '',
@@ -380,10 +391,16 @@
 
         const submitBatchEdit = async () => {
           await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({
-            action: 'batchUpdate', ids: selectedIds.value, date: batchEditForm.value.date, purchaser: batchEditForm.value.purchaser
+            action: 'batchUpdate', 
+            ids: selectedIds.value, 
+            date: batchEditForm.value.date, 
+            purchaser: batchEditForm.value.purchaser,
+            exchangeRate: batchEditForm.value.exchangeRate, // 👉 新增匯率
+            fee: batchEditForm.value.fee                    // 👉 新增手續費
           })});
           showBatchEditModal.value = false;
-          batchEditForm.value = { date: '', purchaser: '' };
+          // 重置表單
+          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '' };
           fetchData();
         };
 
