@@ -265,8 +265,12 @@
               </label>
             </div>
             
+            <div class="p-4 bg-red-900/10 rounded-2xl border border-red-900/20">
+              <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">預估總額 (單價 * 件數 * 匯率 + 手續費)</p>
+              <p class="text-3xl font-black">NT$ {{ Math.round((form.krwPrice * form.exchangeRate * form.quantity) + Number(form.fee)).toLocaleString() }}</p>
+            </div>
             <label class="flex items-center space-x-3 cursor-pointer pt-2">
-              <input type="checkbox" v-model="form.isPaid" class="w-6 h-6 rounded-lg bg-gray-800 text-red-600">
+              <input type="checkbox" v-model="form.isPaid" class="w-6 h-6 rounded-lg bg-gray-800 text-red-600 border border-gray-700">
               <span class="text-sm font-bold">標記為已付費</span>
             </label>
           </div>
