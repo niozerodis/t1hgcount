@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026 T1 購物紀錄系統</title>
+  <title>2026 T1 購物紀錄系統 (照片強化版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
@@ -12,23 +12,23 @@
     <header class="flex justify-between items-center mb-8 border-l-4 border-red-600 pl-4">
       <div>
         <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-widest">T1 2026 SHOPPING</h1>
-        <p class="text-gray-500 text-sm">PRO FRONT-END RECORD SYSTEM</p>
+        <p class="text-gray-500 text-sm">PRO RECORD SYSTEM V2</p>
       </div>
-      <button @click="openModal('add')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold transition">新增紀錄</button>
+      <button @click="openModal('add')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold transition shadow-lg shadow-red-900/20">新增紀錄</button>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-      <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
-        <p class="text-xs text-gray-500 mb-1 uppercase tracking-widest">目前篩選總金額 (TWD)</p>
+      <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
+        <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">目前篩選總金額</p>
         <p class="text-3xl font-black text-white">NT$ {{ filteredTotal.toLocaleString() }}</p>
       </div>
-      <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
-        <p class="text-xs text-gray-500 mb-1 uppercase tracking-widest">剩餘待付金額 (TWD)</p>
+      <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
+        <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">剩餘待付金額</p>
         <p class="text-3xl font-black text-red-500">NT$ {{ pendingTotal.toLocaleString() }}</p>
       </div>
     </div>
 
-    <div class="bg-gray-900 p-4 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 border border-gray-800">
+    <div class="bg-gray-900 p-4 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 border border-gray-800 shadow-lg">
       <select v-model="filters.date" class="bg-gray-800 border-none rounded-lg p-2 focus:ring-2 focus:ring-red-600">
         <option value="">所有購買日</option>
         <option v-for="d in options.dates" :value="d">{{d}}</option>
@@ -43,12 +43,13 @@
       </select>
     </div>
 
-    <div class="overflow-hidden bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl">
+    <div class="bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
-          <thead class="bg-gray-800 text-xs uppercase text-gray-400 font-bold">
+          <thead class="bg-gray-800 text-[10px] uppercase text-gray-400 font-bold tracking-widest">
             <tr>
-              <th class="p-4">商品細節</th>
+              <th class="p-4">照片</th>
+              <th class="p-4">商品名稱</th>
               <th class="p-4">計算詳情 (KRW/TWD)</th>
               <th class="p-4 text-center">狀態</th>
               <th class="p-4 text-right">操作</th>
@@ -56,14 +57,19 @@
           </thead>
           <tbody class="divide-y divide-gray-800">
             <tr v-for="item in filteredList" :key="item.ID" class="hover:bg-gray-800/50 transition">
-              <td class="p-4">
-                <div class="font-bold text-white">{{ item.商品名稱 }}</div>
-                <div class="text-xs text-gray-500">{{ item.商品編號 }} | {{ item.購買日 }} | {{ item.購買人 }}</div>
+              <td class="p-4 w-24">
+                <div v-if="item.照片URL" class="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
+                  <img :src="item.照片URL" class="w-full h-full object-cover" @error="item.照片URL=''">
+                </div>
+                <div v-else class="w-16 h-16 rounded-lg bg-gray-800 flex items-center justify-center text-[10px] text-gray-600">無照片</div>
               </td>
               <td class="p-4">
-                <div class="text-sm font-mono text-red-400">₩ {{ Number(item.韓元價格).toLocaleString() }}</div>
-                <div class="text-xs text-gray-500">匯率 {{ item.韓元匯率 }} + 費 {{ item.刷卡手續費 }}</div>
-                <div class="text-sm font-bold text-white">NT$ {{ Number(item.台幣價格).toLocaleString() }}</div>
+                <div class="font-bold text-white">{{ item.商品名稱 }}</div>
+                <div class="text-[10px] text-gray-500 mt-1 uppercase">{{ item.商品編號 }} | {{ item.購買日 }} | {{ item.購買人 }} | {{ item.選手 }}</div>
+              </td>
+              <td class="p-4 font-mono">
+                <div class="text-sm text-red-400">₩ {{ Number(item.韓元價格).toLocaleString() }}</div>
+                <div class="text-sm font-bold text-white mt-1">NT$ {{ Number(item.台幣價格).toLocaleString() }}</div>
               </td>
               <td class="p-4 text-center">
                 <span :class="item.是否付費 == 'TRUE' || item.是否付費 === true ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'" class="px-2 py-1 rounded text-[10px] font-bold">
@@ -71,8 +77,8 @@
                 </span>
               </td>
               <td class="p-4 text-right space-x-2">
-                <button @click="openModal('edit', item)" class="text-gray-400 hover:text-white text-xs underline">編輯</button>
-                <button @click="deleteItem(item.ID)" class="text-red-900 hover:text-red-500 text-xs underline">刪除</button>
+                <button @click="openModal('edit', item)" class="text-gray-400 hover:text-white text-[10px] underline">編輯</button>
+                <button @click="deleteItem(item.ID)" class="text-red-900 hover:text-red-500 text-[10px] underline">刪除</button>
               </td>
             </tr>
           </tbody>
@@ -80,64 +86,70 @@
       </div>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-        <h2 class="text-2xl font-bold mb-6 border-b border-gray-800 pb-4">{{ modalAction === 'add' ? '新增項目' : '編輯項目' }}</h2>
+    <div v-if="showModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
+        <h2 class="text-2xl font-bold mb-8 border-b border-gray-800 pb-4 tracking-tight">{{ modalAction === 'add' ? '新增購物紀錄' : '編輯購物紀錄' }}</h2>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="space-y-4">
-            <label class="block"><span class="text-xs text-gray-500">購買日</span>
-              <select v-model="form.date" class="w-full bg-gray-800 border-none rounded-lg p-3 mt-1">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="space-y-5">
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買日</span>
+              <select v-model="form.date" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
                 <option v-for="d in options.dates" :value="d">{{d}}</option>
               </select>
             </label>
-            <label class="block"><span class="text-xs text-gray-500">商品編號 / 名稱</span>
-              <input v-model="form.itemId" placeholder="編號" class="w-full bg-gray-800 border-none rounded-lg p-3 mt-1 mb-2">
-              <input v-model="form.itemName" placeholder="名稱" class="w-full bg-gray-800 border-none rounded-lg p-3">
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">商品編號 / 名稱</span>
+              <input v-model="form.itemId" placeholder="編號 (如: T1-001)" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 mb-2">
+              <input v-model="form.itemName" placeholder="商品名稱" class="w-full bg-gray-800 border-none rounded-xl p-3">
             </label>
-            <label class="block"><span class="text-xs text-gray-500">購買人 / 選手</span>
-              <select v-model="form.purchaser" class="w-full bg-gray-800 border-none rounded-lg p-3 mt-1 mb-2">
-                <option v-for="p in options.purchasers" :value="p">{{p}}</option>
-              </select>
-              <select v-model="form.player" class="w-full bg-gray-800 border-none rounded-lg p-3">
-                <option v-for="pl in options.players" :value="pl">{{pl}}</option>
-              </select>
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">照片網址</span>
+              <input v-model="form.photoUrl" placeholder="https://..." class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+              <div v-if="form.photoUrl" class="mt-2 w-full h-32 rounded-xl bg-black overflow-hidden">
+                <img :src="form.photoUrl" class="w-full h-full object-contain">
+              </div>
             </label>
           </div>
           
-          <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-2">
-              <label class="block"><span class="text-xs text-gray-500">韓元價格</span>
-                <input type="number" v-model="form.krwPrice" class="w-full bg-gray-800 border-none rounded-lg p-3 mt-1">
-              </label>
-              <label class="block"><span class="text-xs text-gray-500">匯率</span>
-                <input type="number" step="0.00001" v-model="form.exchangeRate" class="w-full bg-gray-800 border-none rounded-lg p-3 mt-1">
-              </label>
-            </div>
-            <label class="block"><span class="text-xs text-gray-500">手續費 (TWD)</span>
-              <input type="number" v-model="form.fee" class="w-full bg-gray-800 border-none rounded-lg p-3 mt-1">
+          <div class="space-y-5">
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買人 / 選手</span>
+              <select v-model="form.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 mb-2">
+                <option v-for="p in options.purchasers" :value="p">{{p}}</option>
+              </select>
+              <select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3">
+                <option v-for="pl in options.players" :value="pl">{{pl}}</option>
+              </select>
             </label>
-            <div class="p-4 bg-red-900/10 rounded-xl border border-red-900/20">
-              <p class="text-xs text-red-500">自動計算台幣金額</p>
-              <p class="text-2xl font-black">NT$ {{ (form.krwPrice * form.exchangeRate + Number(form.fee)).toFixed(0) }}</p>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">韓元價格</span>
+                <input type="number" v-model="form.krwPrice" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+              </label>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">韓元匯率</span>
+                <input type="number" step="0.00001" v-model="form.exchangeRate" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+              </label>
             </div>
-            <label class="flex items-center space-x-2 cursor-pointer pt-2">
-              <input type="checkbox" v-model="form.isPaid" class="w-6 h-6 rounded bg-gray-800 border-none text-red-600 focus:ring-0">
-              <span class="text-sm">是否已付費</span>
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">手續費 (TWD)</span>
+              <input type="number" v-model="form.fee" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+            </label>
+            <div class="p-4 bg-red-900/10 rounded-2xl border border-red-900/20">
+              <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">預估總額 (TWD)</p>
+              <p class="text-3xl font-black">NT$ {{ (form.krwPrice * form.exchangeRate + Number(form.fee)).toFixed(0) }}</p>
+            </div>
+            <label class="flex items-center space-x-3 cursor-pointer pt-2">
+              <input type="checkbox" v-model="form.isPaid" class="w-6 h-6 rounded-lg bg-gray-800 border-none text-red-600 focus:ring-0">
+              <span class="text-sm font-bold">標記為已付費</span>
             </label>
           </div>
         </div>
 
-        <div class="mt-8 flex space-x-3">
-          <button @click="saveItem" class="flex-1 bg-red-600 p-4 rounded-xl font-bold hover:bg-red-700 transition">儲存並同步到 Google Sheet</button>
-          <button @click="showModal = false" class="px-6 py-4 bg-gray-800 rounded-xl font-bold">取消</button>
+        <div class="mt-10 flex flex-col sm:flex-row gap-3">
+          <button @click="saveItem" class="flex-1 bg-red-600 p-4 rounded-2xl font-bold hover:bg-red-700 transition shadow-lg shadow-red-900/30">儲存並同步到 Google Sheet</button>
+          <button @click="showModal = false" class="px-8 py-4 bg-gray-800 rounded-2xl font-bold text-gray-400 hover:text-white transition">取消</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCXDjUQQFcqsHcYyLyFeVjbvJ1X2PALmUeRUFt_cPGzBq3kwtGQjjm_K60y3gzEREWVw/exec'; // 這裡請替換
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCXDjUQQFcqsHcYyLyFeVjbvJ1X2PALmUeRUFt_cPGzBq3kwtGQjjm_K60y3gzEREWVw/exec'; // 請填入部署網址
 
     const { createApp, ref, computed, onMounted } = Vue;
     createApp({
@@ -152,7 +164,7 @@
           players: ['無', 'Doran', 'Oner', 'Faker', 'Peyz', 'Keria']
         };
         const form = ref({
-          id: null, date: '4/24', itemId: '', itemName: '', priceNote: '', photo: '',
+          id: null, date: '4/24', itemId: '', itemName: '', photoUrl: '',
           purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0
         });
 
@@ -179,12 +191,12 @@
           modalAction.value = action;
           if (item) {
             form.value = { 
-              id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱,
+              id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, photoUrl: item.照片URL || '',
               purchaser: item.購買人, player: item.選手, isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
               krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費)
             };
           } else {
-            form.value = { id: null, date: '4/24', itemId: '', itemName: '', purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0 };
+            form.value = { id: null, date: '4/24', itemId: '', itemName: '', photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0 };
           }
           showModal.value = true;
         };
