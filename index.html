@@ -138,6 +138,12 @@
           </div>
 
           <div class="grid grid-cols-2 gap-4">
+            <label class="block"><span class="text-xs text-gray-400">統一修改：韓元單價</span>
+              <input type="number" v-model="batchEditForm.krwPrice" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
+            </label>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
             <label class="block"><span class="text-xs text-gray-400">統一修改：匯率</span>
               <input type="number" step="0.00001" v-model="batchEditForm.exchangeRate" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
             </label>
@@ -319,7 +325,13 @@
         const batchForm = ref({ date: '', purchaser: '' });
         
         // 批次編輯 Form
-        const batchEditForm = ref({ date: '', purchaser: '', exchangeRate: '', fee: '' });
+        const batchEditForm = ref({ 
+          date: '', 
+          purchaser: '', 
+          exchangeRate: '', 
+          fee: '', 
+          krwPrice: ''
+        });
 
         const form = ref({
           id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '',
@@ -453,17 +465,19 @@
 
         const submitBatchEdit = async () => {
           await sendPostRequest({
-            action: 'batchUpdate', ids: selectedIds.value, 
+            action: 'batchUpdate', 
+            ids: selectedIds.value, 
             date: batchEditForm.value.date, 
             purchaser: batchEditForm.value.purchaser,
             exchangeRate: batchEditForm.value.exchangeRate,
-            fee: batchEditForm.value.fee
+            fee: batchEditForm.value.fee,
+            krwPrice: batchEditForm.value.krwPrice // <-- 確保這行有傳出去
           });
           
           showBatchEditModal.value = false;
-          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '' };
-          selectedIds.value = []; // 清空打勾狀態
-          
+          // 重置表單增加 krwPrice
+          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '' };
+          selectedIds.value = [];
           setTimeout(fetchData, 1500);
         };
 
