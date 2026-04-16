@@ -3,18 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026 T1 購物紀錄系統</title>
+  <title>2026 T1 購物紀錄系統 (套版快速新增版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    /* 自訂隱藏捲軸但可滾動的樣式 */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen p-4 md:p-8">
-  <div id="app" class="max-w-6xl mx-auto">
-    <header class="flex justify-between items-center mb-8 border-l-4 border-red-600 pl-4">
+  <div id="app" class="max-w-7xl mx-auto">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-l-4 border-red-600 pl-4 gap-4">
       <div>
         <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-widest">T1 2026 SHOPPING</h1>
-        <p class="text-gray-500 text-sm">PRO RECORD SYSTEM V3</p>
+        <p class="text-gray-500 text-sm">PRO RECORD SYSTEM V4 (BATCH MODE)</p>
       </div>
-      <button @click="openModal('add')" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg shadow-red-900/20 text-sm">新增紀錄</button>
+      <div class="flex gap-3 w-full md:w-auto">
+        <button @click="openTemplateModal" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg shadow-blue-900/20 text-sm">
+          ⚡ 快速輸入商品
+        </button>
+        <button @click="openModal('add')" class="flex-1 md:flex-none bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg shadow-red-900/20 text-sm">
+          + 手動新增
+        </button>
+      </div>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -45,31 +57,36 @@
 
     <div class="bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead class="bg-gray-800 text-[10px] uppercase text-gray-400 font-bold tracking-widest">
+        <table class="w-full text-left border-collapse min-w-[800px]">
+          <thead class="bg-gray-800 text-[10px] uppercase text-gray-400 font-bold tracking-widest whitespace-nowrap">
             <tr>
-              <th class="p-4">照片</th>
-              <th class="p-4">商品名稱</th>
+              <th class="p-4 w-20">照片</th>
+              <th class="p-4">商品明細</th>
+              <th class="p-4 text-center">件數</th>
               <th class="p-4">計算詳情 (KRW/TWD)</th>
               <th class="p-4 text-center">狀態</th>
               <th class="p-4 text-right">操作</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-800">
+            <tr v-if="filteredList.length === 0" class="text-center text-gray-500"><td colspan="6" class="p-8">無資料</td></tr>
             <tr v-for="item in filteredList" :key="item.ID" class="hover:bg-gray-800/50 transition group">
-              <td class="p-4 w-24">
-                <div v-if="item.照片URL" class="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
-                  <img :src="item.照片URL" class="w-full h-full object-cover" @error="item.照片URL=''">
+              <td class="p-4">
+                <div v-if="item.照片" class="w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
+                  <img :src="item.照片" class="w-full h-full object-cover" @error="item.照片=''">
                 </div>
-                <div v-else class="w-16 h-16 rounded-lg bg-gray-800 flex items-center justify-center text-[10px] text-gray-600">無照片</div>
+                <div v-else class="w-12 h-12 md:w-16 md:h-16 rounded-lg bg-gray-800 flex items-center justify-center text-[10px] text-gray-600">無圖</div>
               </td>
               <td class="p-4">
-                <div class="font-bold text-white">{{ item.商品名稱 }}</div>
-                <div class="text-[10px] text-gray-500 mt-1 uppercase">{{ item.商品編號 }} | {{ item.購買日 }} | {{ item.購買人 }} | {{ item.選手 }}</div>
+                <div class="font-bold text-white text-sm md:text-base">{{ item.商品名稱 }}</div>
+                <div class="text-[10px] md:text-xs text-gray-500 mt-1 uppercase">{{ item.商品編號 }} | {{ item.購買日 || '未填' }} | {{ item.購買人 }} | {{ item.選手 }}</div>
               </td>
-              <td class="p-4 font-mono">
-                <div class="text-sm text-red-400">₩ {{ Number(item.韓元價格).toLocaleString() }}</div>
-                <div class="text-sm font-bold text-white mt-1">NT$ {{ Number(item.台幣價格).toLocaleString() }}</div>
+              <td class="p-4 text-center font-bold text-lg text-blue-400">
+                x {{ item.件數 || 1 }}
+              </td>
+              <td class="p-4 font-mono whitespace-nowrap">
+                <div class="text-xs md:text-sm text-red-400">₩ {{ Number(item.韓元價格).toLocaleString() }}</div>
+                <div class="text-sm md:text-base font-bold text-white mt-1">NT$ {{ Number(item.台幣價格).toLocaleString() }}</div>
               </td>
               <td class="p-4 text-center">
                 <span :class="item.是否付費 == 'TRUE' || item.是否付費 === true ? 'bg-green-900/30 text-green-400 border border-green-800/50' : 'bg-red-900/30 text-red-400 border border-red-800/50'" class="px-2 py-1.5 rounded text-[10px] font-bold">
@@ -78,12 +95,8 @@
               </td>
               <td class="p-4 text-right">
                 <div class="flex justify-end space-x-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
-                  <button @click="openModal('edit', item)" class="px-3 py-1.5 bg-gray-800 hover:bg-blue-600/20 text-gray-300 hover:text-blue-400 border border-gray-700 hover:border-blue-500/50 rounded-md text-xs font-medium transition-colors">
-                    編輯
-                  </button>
-                  <button @click="deleteItem(item.ID)" class="px-3 py-1.5 bg-gray-800 hover:bg-red-600/20 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-500/50 rounded-md text-xs font-medium transition-colors">
-                    刪除
-                  </button>
+                  <button @click="openModal('edit', item)" class="px-3 py-1.5 bg-gray-800 hover:bg-blue-600/20 text-gray-300 hover:text-blue-400 border border-gray-700 hover:border-blue-500/50 rounded-md text-xs font-medium transition-colors">編輯</button>
+                  <button @click="deleteItem(item.ID)" class="px-3 py-1.5 bg-gray-800 hover:bg-red-600/20 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-500/50 rounded-md text-xs font-medium transition-colors">刪除</button>
                 </div>
               </td>
             </tr>
@@ -92,14 +105,80 @@
       </div>
     </div>
 
+    <div v-if="showTemplateModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-gray-800 flex justify-between items-center shrink-0">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-blue-400">⚡ 快速輸入商品 (從套版)</h2>
+            <p class="text-xs text-gray-500 mt-1">請勾選要加入的商品，並指定購買人與選手。點擊下方批次新增。</p>
+          </div>
+          <button @click="showTemplateModal = false" class="text-gray-500 hover:text-white text-3xl">&times;</button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto no-scrollbar grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
+          <div v-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">
+            您的「2026/04 套版」資料表中尚未建立任何資料，請先至 Google Sheet 建立！
+          </div>
+
+          <div v-for="(tpl, idx) in templateData" :key="idx" 
+               :class="tpl.selected ? 'border-blue-500 bg-blue-900/10' : 'border-gray-800 bg-gray-800/50'"
+               class="relative rounded-2xl border-2 transition-all duration-200 overflow-hidden group hover:border-gray-600">
+            
+            <label class="absolute top-3 left-3 z-10 cursor-pointer bg-black/50 p-1.5 rounded-lg backdrop-blur-sm">
+              <input type="checkbox" v-model="tpl.selected" class="w-5 h-5 rounded border-gray-600 text-blue-600 focus:ring-0 cursor-pointer">
+            </label>
+
+            <div class="h-40 bg-black relative">
+              <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+              <div v-else class="w-full h-full flex items-center justify-center text-gray-600 text-sm">無圖片</div>
+              <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3 pt-8">
+                <span class="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded font-mono">{{ tpl.編號 || '無編號' }}</span>
+                <p class="font-bold text-white leading-tight mt-1 truncate">{{ tpl.商品名稱 || '未命名' }}</p>
+              </div>
+            </div>
+
+            <div class="p-4 space-y-3">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-400">韓元單價</span>
+                <span class="text-red-400 font-mono font-bold">₩ {{ Number(tpl.韓元價格).toLocaleString() }}</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <select v-model="tpl.purchaser" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs text-white">
+                  <option disabled value="">購買人</option>
+                  <option v-for="p in options.purchasers" :value="p">{{p}}</option>
+                </select>
+                <select v-model="tpl.player" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs text-white">
+                  <option disabled value="">選手</option>
+                  <option v-for="pl in options.players" :value="pl">{{pl}}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-800 bg-gray-900/90 shrink-0 flex items-center justify-between">
+          <span class="text-sm text-gray-400">已選取 <strong class="text-white text-lg">{{ selectedTemplateCount }}</strong> 項商品</span>
+          <div class="space-x-3">
+            <button @click="showTemplateModal = false" class="px-6 py-3 bg-gray-800 border border-gray-700 rounded-xl font-bold text-gray-300 hover:text-white transition">取消</button>
+            <button @click="submitBatchAdd" :disabled="selectedTemplateCount === 0" 
+                    :class="selectedTemplateCount > 0 ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/30 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'"
+                    class="px-8 py-3 rounded-xl font-bold transition shadow-lg">
+              批次新增到主表
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="showModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
-        <h2 class="text-2xl font-bold mb-8 border-b border-gray-800 pb-4 tracking-tight">{{ modalAction === 'add' ? '新增購物紀錄' : '編輯購物紀錄' }}</h2>
+        <h2 class="text-2xl font-bold mb-8 border-b border-gray-800 pb-4 tracking-tight">{{ modalAction === 'add' ? '手動新增紀錄' : '編輯購物紀錄' }}</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div class="space-y-5">
             <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買日</span>
               <select v-model="form.date" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+                <option value="">(留空)</option>
                 <option v-for="d in options.dates" :value="d">{{d}}</option>
               </select>
             </label>
@@ -107,7 +186,7 @@
               <input v-model="form.itemId" placeholder="編號 (如: T1-001)" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 mb-2">
               <input v-model="form.itemName" placeholder="商品名稱" class="w-full bg-gray-800 border-none rounded-xl p-3">
             </label>
-            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">照片網址 (建議使用 imgur 圖片直連)</span>
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">照片網址</span>
               <input v-model="form.photoUrl" placeholder="https://i.imgur.com/..." class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
               <div v-if="form.photoUrl" class="mt-2 w-full h-32 rounded-xl bg-black overflow-hidden border border-gray-800">
                 <img :src="form.photoUrl" class="w-full h-full object-contain">
@@ -116,29 +195,42 @@
           </div>
           
           <div class="space-y-5">
-            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買人 / 選手</span>
-              <select v-model="form.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 mb-2">
-                <option v-for="p in options.purchasers" :value="p">{{p}}</option>
-              </select>
-              <select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3">
-                <option v-for="pl in options.players" :value="pl">{{pl}}</option>
-              </select>
-            </label>
             <div class="grid grid-cols-2 gap-2">
-              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">韓元價格</span>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買人</span>
+                <select v-model="form.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+                  <option v-for="p in options.purchasers" :value="p">{{p}}</option>
+                </select>
+              </label>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">選手</span>
+                <select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+                  <option v-for="pl in options.players" :value="pl">{{pl}}</option>
+                </select>
+              </label>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-2">
+              <label class="block"><span class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">件數</span>
+                <input type="number" min="1" v-model="form.quantity" class="w-full bg-blue-900/20 text-blue-300 border border-blue-900/50 rounded-xl p-3 mt-1 text-center font-bold">
+              </label>
+              <label class="block col-span-2"><span class="text-[10px] text-gray-500 uppercase tracking-widest">韓元單價</span>
                 <input type="number" v-model="form.krwPrice" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
               </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
               <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">韓元匯率</span>
                 <input type="number" step="0.00001" v-model="form.exchangeRate" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
               </label>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">總手續費(TWD)</span>
+                <input type="number" v-model="form.fee" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
+              </label>
             </div>
-            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">手續費 (TWD)</span>
-              <input type="number" v-model="form.fee" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
-            </label>
+            
             <div class="p-4 bg-red-900/10 rounded-2xl border border-red-900/20">
-              <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">預估總額 (TWD)</p>
-              <p class="text-3xl font-black">NT$ {{ (form.krwPrice * form.exchangeRate + Number(form.fee)).toFixed(0) }}</p>
+              <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">預估總額 (單價 * 件數 * 匯率 + 手續費)</p>
+              <p class="text-3xl font-black">NT$ {{ Math.round((form.krwPrice * form.exchangeRate * form.quantity) + Number(form.fee)) }}</p>
             </div>
+            
             <label class="flex items-center space-x-3 cursor-pointer pt-2">
               <input type="checkbox" v-model="form.isPaid" class="w-6 h-6 rounded-lg bg-gray-800 border border-gray-700 text-red-600 focus:ring-red-600 focus:ring-offset-gray-900 cursor-pointer">
               <span class="text-sm font-bold">標記為已付費</span>
@@ -155,28 +247,43 @@
   </div>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCXDjUQQFcqsHcYyLyFeVjbvJ1X2PALmUeRUFt_cPGzBq3kwtGQjjm_K60y3gzEREWVw/exec'; // 請替換
+    const GAS_URL = '你的_GAS_DEPLOY_URL'; // ❗ 請替換為新的網址 ❗
 
     const { createApp, ref, computed, onMounted } = Vue;
     createApp({
       setup() {
         const list = ref([]);
+        const templateData = ref([]); // 存放套版資料
         const showModal = ref(false);
+        const showTemplateModal = ref(false);
         const modalAction = ref('add');
+        
         const filters = ref({ date: '', purchaser: '', player: '' });
         const options = {
           dates: ['4/24', '4/25', '4/26'],
           purchasers: ['Nio', '慕斯', '阿龍'],
           players: ['無', 'Doran', 'Oner', 'Faker', 'Peyz', 'Keria']
         };
+        
+        // Form 加入了 quantity (件數)
         const form = ref({
-          id: null, date: '4/24', itemId: '', itemName: '', photoUrl: '',
+          id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '',
           purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0
         });
 
+        // 讀取包含 records 與 templates 的雙重資料
         const fetchData = async () => {
           const res = await fetch(GAS_URL);
-          list.value = await res.json();
+          const data = await res.json();
+          list.value = data.records || [];
+          
+          // 整理套版資料，加入前端狀態控制屬性 (selected, purchaser, player)
+          templateData.value = (data.templates || []).map(t => ({
+            ...t,
+            selected: false,
+            purchaser: 'Nio', // 預設值
+            player: '無'      // 預設值
+          }));
         };
 
         const filteredList = computed(() => {
@@ -193,20 +300,32 @@
           return s + (paid ? 0 : Number(i.台幣價格));
         }, 0));
 
+        const selectedTemplateCount = computed(() => templateData.value.filter(t => t.selected).length);
+
+        // 打開手動編輯/新增
         const openModal = (action, item = null) => {
           modalAction.value = action;
           if (item) {
             form.value = { 
-              id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, photoUrl: item.照片URL || '',
+              id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, 
+              quantity: Number(item.件數) || 1, photoUrl: item.照片 || '',
               purchaser: item.購買人, player: item.選手, isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
               krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費)
             };
           } else {
-            form.value = { id: null, date: '4/24', itemId: '', itemName: '', photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0 };
+            form.value = { id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0 };
           }
           showModal.value = true;
         };
 
+        // 打開快速套版新增
+        const openTemplateModal = () => {
+          // 重置所有選取狀態
+          templateData.value.forEach(t => t.selected = false);
+          showTemplateModal.value = true;
+        };
+
+        // 儲存單筆
         const saveItem = async () => {
           const payload = { ...form.value, action: modalAction.value };
           await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
@@ -214,14 +333,38 @@
           fetchData();
         };
 
+        // 刪除單筆
         const deleteItem = async (id) => {
           if(!confirm('確定要刪除這筆紀錄嗎？這將無法復原。')) return;
           await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ id, action: 'delete' }) });
           fetchData();
         };
 
+        // 提交批次套版新增
+        const submitBatchAdd = async () => {
+          const selectedItems = templateData.value.filter(t => t.selected).map(t => ({
+            itemId: t.編號,
+            itemName: t.商品名稱,
+            photoUrl: t.照片,
+            krwPrice: t.韓元價格,
+            purchaser: t.purchaser,
+            player: t.player
+          }));
+
+          // 呼叫 API，action 為 batchAdd
+          await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'batchAdd', items: selectedItems }) });
+          
+          showTemplateModal.value = false;
+          alert(`✅ 成功批次新增 ${selectedItems.length} 筆商品！`);
+          fetchData(); // 重新載入主畫面資料
+        };
+
         onMounted(fetchData);
-        return { list, filteredList, filters, options, filteredTotal, pendingTotal, showModal, modalAction, form, openModal, saveItem, deleteItem };
+        return { 
+          list, filteredList, filters, options, filteredTotal, pendingTotal, 
+          showModal, modalAction, form, openModal, saveItem, deleteItem,
+          templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd
+        };
       }
     }).mount('#app');
   </script>
