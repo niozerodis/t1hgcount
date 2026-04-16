@@ -159,28 +159,33 @@
           <button @click="showTemplateModal = false" class="text-gray-500 hover:text-white text-3xl">&times;</button>
         </div>
         
-        <div class="p-6 overflow-y-auto no-scrollbar grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 flex-1">
-          <div v-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">
-            您的「2026/04 套版」資料表中尚未建立任何資料！
-          </div>
-
-          <div v-for="(tpl, idx) in templateData" :key="idx" 
-               @click="tpl.selected = !tpl.selected"
-               :class="tpl.selected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-800 bg-gray-800/50'"
-               class="relative rounded-2xl border-2 transition-all duration-200 overflow-hidden group cursor-pointer hover:border-gray-600">
+        <div class="p-6 overflow-y-auto no-scrollbar flex-1">
+  
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             
-            <div v-if="tpl.selected" class="absolute top-2 right-2 z-10 bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg">✓</div>
-
-            <div class="h-32 bg-black relative">
-              <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition">
-              <div v-else class="w-full h-full flex items-center justify-center text-gray-600 text-sm">無圖</div>
-              <div class="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] rounded backdrop-blur-sm border border-gray-600 uppercase">{{ tpl.選手 || '無選手' }}</div>
+            <div v-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">
+              您的「2026/04 套版」資料表中尚未建立任何資料！
             </div>
-
-            <div class="p-3">
-              <div class="text-[10px] text-gray-500">{{ tpl.編號 || '無編號' }}</div>
-              <div class="font-bold text-white text-sm leading-tight mt-0.5 truncate">{{ tpl.商品名稱 || '未命名' }}</div>
-              <div class="mt-2 text-red-400 font-mono text-xs font-bold">₩ {{ Number(tpl.韓元價格).toLocaleString() }}</div>
+        
+            <div v-for="(tpl, idx) in templateData" :key="idx" 
+                 @click="tpl.selected = !tpl.selected"
+                 :class="tpl.selected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-800 bg-gray-800/50'"
+                 class="relative rounded-2xl border-2 transition-all duration-200 overflow-hidden group cursor-pointer hover:border-gray-600">
+              
+              <div v-if="tpl.selected" class="absolute top-2 right-2 z-10 bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg">✓</div>
+        
+              <div class="h-32 bg-black relative">
+                <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition">
+                <div v-else class="w-full h-full flex items-center justify-center text-gray-600 text-sm">無圖</div>
+                <div class="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] rounded backdrop-blur-sm border border-gray-600 uppercase">{{ tpl.選手 || '無選手' }}</div>
+              </div>
+        
+              <div class="p-3">
+                <div class="text-[10px] text-gray-500">{{ tpl.編號 || '無編號' }}</div>
+                <div class="font-bold text-white text-sm leading-tight mt-0.5 truncate">{{ tpl.商品名稱 || '未命名' }}</div>
+                <div class="mt-2 text-red-400 font-mono text-xs font-bold">₩ {{ Number(tpl.韓元價格).toLocaleString() }}</div>
+              </div>
+        
             </div>
           </div>
         </div>
