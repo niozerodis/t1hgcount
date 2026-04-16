@@ -330,8 +330,9 @@
         const isLoading = ref(false);
         const fetchError = ref('');
         const fetchData = async () => {
-          isLoading.value = true;
-          fetchError.value = ''; // 每次讀取前清空錯誤
+          isLoading.value = true; // 開啟圈圈
+          fetchError.value = '';  // 清空錯誤訊息
+          
           try {
             const res = await fetch(GAS_URL);
             const text = await res.text(); 
@@ -340,17 +341,19 @@
             try {
               data = JSON.parse(text);
             } catch (err) {
-              throw new Error("後端回傳的不是正確格式。請確認你的 GAS 網址是否正確，且已重新部署！");
+              console.error("Google 回傳的不是資料，而是這個網頁：", text);
+              throw new Error("Google 阻擋了讀取！這 100% 是因為 GAS 部署權限設定錯誤。請回 GAS 將執行身分設為「我」，存取權限設為「所有人」。");
             }
 
             list.value = data.records || [];
             templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
             selectedIds.value = []; 
+            
           } catch (e) {
-            console.error(e);
-            fetchError.value = e.message || "無法連線到 Google Sheets，請確認網址或權限。";
+            console.error("抓取資料時發生致命錯誤:", e);
+            fetchError.value = e.message || "發生跨域錯誤 (CORS)，請檢查 GAS 部署權限。";
           } finally {
-            // 👉 破除無限 Loading 的關鍵：不管成功或失敗，這裡一定會執行！
+            // 👉 破除無限 Loading 的關鍵：不管上面發生什麼天崩地裂的錯誤，這裡一定會把圈圈關掉！
             isLoading.value = false; 
           }
         };
