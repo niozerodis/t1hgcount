@@ -328,19 +328,30 @@
         });
 
         const isLoading = ref(false);
-
+        const fetchError = ref('');
         const fetchData = async () => {
-          isLoading.value = true; // 開啟 Loading
+          isLoading.value = true;
+          fetchError.value = ''; // 每次讀取前清空錯誤
           try {
             const res = await fetch(GAS_URL);
-            const data = await res.json();
+            const text = await res.text(); 
+            
+            let data;
+            try {
+              data = JSON.parse(text);
+            } catch (err) {
+              throw new Error("後端回傳的不是正確格式。請確認你的 GAS 網址是否正確，且已重新部署！");
+            }
+
             list.value = data.records || [];
             templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
             selectedIds.value = []; 
           } catch (e) {
-            console.error("讀取失敗", e);
+            console.error(e);
+            fetchError.value = e.message || "無法連線到 Google Sheets，請確認網址或權限。";
           } finally {
-            isLoading.value = false; // 關閉 Loading
+            // 👉 破除無限 Loading 的關鍵：不管成功或失敗，這裡一定會執行！
+            isLoading.value = false; 
           }
         };
 
@@ -392,21 +403,22 @@
         };
 
         const sendPostRequest = async (payload) => {
-          isLoading.value = true; // 開啟 Loading
+          isLoading.value = true;
+          fetchError.value = '';
           try {
             await fetch(GAS_URL, {
               method: 'POST',
-              mode: 'no-cors',
+              mode: 'no-cors', // 忽略跨域阻擋
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: JSON.stringify(payload)
             });
           } catch (error) {
-            console.log('已忽略 GAS 重新導向錯誤');
+            console.log('忽略跨域阻擋');
           }
-          
-          // 等待 1.5 秒讓 Google Sheet 存檔，再重新抓取最新資料
-          // (fetchData 裡面會自己把 isLoading 關掉，所以這裡不用手動關)
-          setTimeout(fetchData, 1500); 
+          // 等 1.5 秒讓 Google 存檔，再重新抓取畫面
+          setTimeout(() => {
+            fetchData();
+          }, 1500); 
         };
 
         const saveItem = async () => {
@@ -455,10 +467,10 @@
 
         onMounted(fetchData);
         return { 
-          list, filteredList, filters, options, filteredTotal, pendingTotal, 
+          isLoading, fetchError, list, filteredList, filters, options, filteredTotal, pendingTotal, 
           showModal, modalAction, form, openModal, saveItem, deleteItem,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, isLoading
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit
         };
       }
     }).mount('#app');
