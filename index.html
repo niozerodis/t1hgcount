@@ -12,6 +12,12 @@
   </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen p-4 md:p-8">
+  <div v-if="isLoading" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity">
+    <div class="w-16 h-16 border-4 border-gray-700 border-t-red-600 rounded-full animate-spin mb-6 shadow-[0_0_15px_rgba(220,38,38,0.5)]"></div>
+    <p class="text-white font-bold tracking-widest animate-pulse text-lg">資料同步中，請稍候...</p>
+    <p class="text-gray-500 text-xs mt-2">Connecting to Google Sheets</p>
+  </div>
+  
   <div id="app" class="max-w-7xl mx-auto">
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-l-4 border-red-600 pl-4 gap-4">
       <div>
@@ -321,12 +327,21 @@
           purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0
         });
 
+        const isLoading = ref(false);
+
         const fetchData = async () => {
-          const res = await fetch(GAS_URL);
-          const data = await res.json();
-          list.value = data.records || [];
-          templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
-          selectedIds.value = []; // 重整後清空勾選
+          isLoading.value = true; // 開啟 Loading
+          try {
+            const res = await fetch(GAS_URL);
+            const data = await res.json();
+            list.value = data.records || [];
+            templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
+            selectedIds.value = []; 
+          } catch (e) {
+            console.error("讀取失敗", e);
+          } finally {
+            isLoading.value = false; // 關閉 Loading
+          }
         };
 
         const filteredList = computed(() => {
@@ -376,21 +391,24 @@
           showTemplateModal.value = true;
         };
 
-        // 💡 1. 新增一個共用的 API 呼叫函式，加上 no-cors 與錯誤攔截
         const sendPostRequest = async (payload) => {
+          isLoading.value = true; // 開啟 Loading
           try {
             await fetch(GAS_URL, {
               method: 'POST',
-              mode: 'no-cors', // 這是破解 Google CORS 阻擋的關鍵
+              mode: 'no-cors',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: JSON.stringify(payload)
             });
           } catch (error) {
             console.log('已忽略 GAS 重新導向錯誤');
           }
+          
+          // 等待 1.5 秒讓 Google Sheet 存檔，再重新抓取最新資料
+          // (fetchData 裡面會自己把 isLoading 關掉，所以這裡不用手動關)
+          setTimeout(fetchData, 1500); 
         };
 
-        // 💡 2. 更新：單筆儲存
         const saveItem = async () => {
           const payload = { ...form.value, action: modalAction.value };
           await sendPostRequest(payload);
@@ -406,7 +424,6 @@
           fetchData();
         };
 
-        // 💡 3. 更新：套版批次新增
         const submitBatchAdd = async () => {
           const selectedItems = templateData.value.filter(t => t.selected).map(t => ({
             itemId: t.編號, itemName: t.商品名稱, photoUrl: t.照片, krwPrice: t.韓元價格, player: t.選手
@@ -420,7 +437,6 @@
           setTimeout(fetchData, 1500);
         };
 
-        // 💡 4. 更新：主畫面批次編輯
         const submitBatchEdit = async () => {
           await sendPostRequest({
             action: 'batchUpdate', ids: selectedIds.value, 
@@ -442,7 +458,7 @@
           list, filteredList, filters, options, filteredTotal, pendingTotal, 
           showModal, modalAction, form, openModal, saveItem, deleteItem,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, isLoading
         };
       }
     }).mount('#app');
