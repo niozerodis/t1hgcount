@@ -36,7 +36,11 @@
       </div>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
+        <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">目前篩選韓元總額</p>
+        <p class="text-3xl font-black text-blue-400">₩ {{ filteredKrwTotal }}</p>
+      </div>
       <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">目前篩選總金額</p>
         <p class="text-3xl font-black text-white">NT$ {{ filteredTotal.toLocaleString() }}</p>
@@ -377,6 +381,16 @@
           );
         });
 
+        const filteredKrwTotal = computed(() => {
+          const total = filteredList.value.reduce((s, i) => {
+            const krw = Number(i.韓元價格) || 0;
+            const qty = Number(i.件數) || 1;
+            return s + (krw * qty);
+          }, 0);
+          // 韓元一樣取整數加上千分位逗號
+          return Math.round(total).toLocaleString(); 
+        });
+
         const filteredTotal = computed(() => {
           const total = filteredList.value.reduce((s, i) => s + Number(i.台幣價格), 0);
           return Math.round(total).toLocaleString(); // 四捨五入並加逗號
@@ -483,7 +497,7 @@
 
         onMounted(fetchData);
         return { 
-          isLoading, fetchError, list, filteredList, filters, options, filteredTotal, pendingTotal, 
+          isLoading, fetchError, list, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
           selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit
