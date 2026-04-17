@@ -51,7 +51,7 @@
       </div>
     </div>
 
-    <div class="bg-gray-900 p-4 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 border border-gray-800 shadow-lg">
+    <div class="bg-gray-900 p-4 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-4 gap-4 border border-gray-800 shadow-lg">
       <select v-model="filters.date" class="bg-gray-800 border-none rounded-lg p-2 focus:ring-2 focus:ring-red-600 text-sm">
         <option value="">所有購買日</option>
         <option v-for="d in options.dates" :value="d">{{d}}</option>
@@ -64,6 +64,10 @@
         <option value="">所有選手</option>
         <option v-for="pl in options.players" :value="pl">{{pl}}</option>
       </select>
+      <label class="flex items-center justify-center sm:justify-start space-x-2 cursor-pointer bg-gray-800 hover:bg-gray-700 transition p-2 rounded-lg border border-gray-700 h-full">
+        <input type="checkbox" v-model="sortByItemAndPlayer" class="w-4 h-4 rounded border-gray-600 text-blue-600 focus:ring-0 cursor-pointer">
+        <span class="text-sm font-bold text-gray-300">商品與選手排序</span>
+      </label>
     </div>
 
     <div class="bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
@@ -307,6 +311,7 @@
       setup() {
         const list = ref([]);
         const templateData = ref([]); 
+        const sortByItemAndPlayer = ref(false);
         
         // Modal 控制
         const showModal = ref(false);
@@ -374,11 +379,32 @@
         };
 
         const filteredList = computed(() => {
-          return list.value.filter(i => 
+          // 先進行原有的過濾
+          let result = list.value.filter(i => 
             (!filters.value.date || i.購買日 == filters.value.date) &&
             (!filters.value.purchaser || i.購買人 == filters.value.purchaser) &&
             (!filters.value.player || i.選手 == filters.value.player)
           );
+        
+          // 如果有開啟排序，就執行排序邏輯
+          if (sortByItemAndPlayer.value) {
+            result.sort((a, b) => {
+              const nameA = a.商品名稱 || '';
+              const nameB = b.商品名稱 || '';
+              
+              // 第一層排序：比較商品名稱 (使用 localeCompare 讓中文筆劃/拼音排序更精準)
+              if (nameA !== nameB) {
+                return nameA.localeCompare(nameB, 'zh-TW');
+              }
+              
+              // 第二層排序：如果商品名稱相同，再比較選手名字
+              const playerA = a.選手 || '';
+              const playerB = b.選手 || '';
+              return playerA.localeCompare(playerB, 'zh-TW');
+            });
+          }
+          
+          return result;
         });
 
         const filteredKrwTotal = computed(() => {
@@ -497,7 +523,7 @@
 
         onMounted(fetchData);
         return { 
-          isLoading, fetchError, list, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
+          isLoading, fetchError, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
           selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit
