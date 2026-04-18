@@ -105,7 +105,7 @@
               <td class="p-4 text-center font-bold text-lg text-blue-400">x {{ item.件數 || 1 }}</td>
               <td class="p-4 font-mono whitespace-nowrap">
                 <div class="text-xs md:text-sm text-red-400">₩ {{ Number(item.韓元價格).toLocaleString() }}</div>
-                <div class="text-sm md:text-base font-bold text-white mt-1">NT$ {{ Math.round(Number(item.台幣價格)).toLocaleString() }}</div>
+                <div class="text-sm md:text-base font-bold text-white mt-1">NT$ {{ getItemTwd(item).toLocaleString() }}</div>
               </td>
               <td class="p-4 text-center">
                 <span :class="item.是否付費 == 'TRUE' || item.是否付費 === true ? 'bg-green-900/30 text-green-400 border border-green-800/50' : 'bg-red-900/30 text-red-400 border border-red-800/50'" class="px-2 py-1.5 rounded text-[10px] font-bold">
@@ -405,6 +405,16 @@
           
           return result;
         });
+        
+        const getItemTwd = (item) => {
+          const krw = Number(item.韓元價格) || 0;
+          const rate = Number(item.韓元匯率) || 0;
+          const qty = Number(item.件數) || 1;
+          
+          const baseTwd = krw * rate * qty; // 純商品台幣
+          const fee = Math.round(baseTwd * 0.015); // 1.5% 手續費
+          return Math.round(baseTwd + fee); // 總和
+        };
 
         const filteredKrwTotal = computed(() => {
           const total = filteredList.value.reduce((s, i) => {
@@ -417,15 +427,16 @@
         });
 
         const filteredTotal = computed(() => {
-          const total = filteredList.value.reduce((s, i) => s + Number(i.台幣價格), 0);
-          return Math.round(total).toLocaleString(); // 四捨五入並加逗號
+          const total = filteredList.value.reduce((s, i) => s + getItemTwd(i), 0);
+          return Math.round(total).toLocaleString();
         });
+        
         const pendingTotal = computed(() => {
           const total = filteredList.value.reduce((s, i) => {
             const paid = i.是否付費 == 'TRUE' || i.是否付費 === true;
-            return s + (paid ? 0 : Number(i.台幣價格));
+            return s + (paid ? 0 : getItemTwd(i));
           }, 0);
-          return Math.round(total).toLocaleString(); // 四捨五入並加逗號
+          return Math.round(total).toLocaleString();
         });
 
         const selectedTemplateCount = computed(() => templateData.value.filter(t => t.selected).length);
@@ -528,7 +539,7 @@
           isLoading, fetchError, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd
         };
       }
     }).mount('#app');
