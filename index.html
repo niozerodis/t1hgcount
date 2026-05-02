@@ -83,11 +83,12 @@
               <th class="p-4 text-center">件數</th>
               <th class="p-4">計算詳情 (KRW/TWD)</th>
               <th class="p-4 text-center">狀態</th>
+              <th class="p-4">備註</th>
               <th class="p-4 text-right">操作</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-800">
-            <tr v-if="filteredList.length === 0" class="text-center text-gray-500"><td colspan="7" class="p-8">無資料</td></tr>
+            <tr v-if="filteredList.length === 0" class="text-center text-gray-500"><td colspan="8" class="p-8">無資料</td></tr>
             <tr v-for="item in filteredList" :key="item.ID" class="hover:bg-gray-800/50 transition group" :class="{'bg-gray-800/30': selectedIds.includes(item.ID)}">
               <td class="p-4 text-center">
                 <input type="checkbox" :value="item.ID" v-model="selectedIds" class="w-4 h-4 rounded border-gray-600 text-red-600 focus:ring-0 cursor-pointer">
@@ -111,6 +112,9 @@
                 <span :class="item.是否付費 == 'TRUE' || item.是否付費 === true ? 'bg-green-900/30 text-green-400 border border-green-800/50' : 'bg-red-900/30 text-red-400 border border-red-800/50'" class="px-2 py-1.5 rounded text-[10px] font-bold">
                   {{ item.是否付費 == 'TRUE' || item.是否付費 === true ? '已付費' : '未付費' }}
                 </span>
+              </td>
+              <td class="p-4 text-xs text-gray-400">
+                {{ item.備註 || '-' }}
               </td>
               <td class="p-4 text-right">
                 <div class="flex justify-end space-x-2">
@@ -291,6 +295,10 @@
               <input type="checkbox" v-model="form.isPaid" class="w-6 h-6 rounded-lg bg-gray-800 text-red-600 border border-gray-700">
               <span class="text-sm font-bold">標記為已付費</span>
             </label>
+            <label class="block mt-4">
+              <span class="text-[10px] text-gray-500 uppercase tracking-widest">備註</span>
+              <textarea v-model="form.remark" rows="2" placeholder="可輸入衣服尺寸、注意事項..." class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-sm text-white placeholder-gray-600"></textarea>
+            </label>
           </div>
         </div>
 
@@ -343,7 +351,8 @@
 
         const form = ref({
           id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '',
-          purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0
+          purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0,
+          remark: ''
         });
 
         const isLoading = ref(false);
@@ -452,10 +461,15 @@
             form.value = { 
               id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, quantity: Number(item.件數) || 1, photoUrl: item.照片 || '',
               purchaser: item.購買人, player: item.選手, isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
-              krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費)
+              krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費),
+              remark: item.備註 || '' // <-- 新增這行
             };
           } else {
-            form.value = { id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0 };
+            form.value = { 
+              id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', 
+              purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, 
+              remark: '' // <-- 新增這行
+            };
           }
           showModal.value = true;
         };
