@@ -159,8 +159,16 @@
             <label class="block"><span class="text-xs text-gray-400">統一修改：匯率</span>
               <input type="number" step="0.00001" v-model="batchEditForm.exchangeRate" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
             </label>
+            <label class="block"><span class="text-xs text-gray-400">統一修改：付款狀態</span>
+              <select v-model="batchEditForm.isPaid" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
+                <option value="">-- 不變更 --</option>
+                <option value="TRUE">標記為「已付費」</option>
+                <option value="FALSE">標記為「未付費」</option>
+              </select>
+            </label>
           </div>
         </div>
+        
 
         <div class="mt-8 flex gap-3">
           <button @click="submitBatchEdit" class="flex-1 bg-yellow-600 p-3 rounded-xl font-bold hover:bg-yellow-700 text-white transition">套用並重新計算台幣</button>
@@ -346,7 +354,8 @@
           purchaser: '', 
           exchangeRate: '', 
           fee: '', 
-          krwPrice: ''
+          krwPrice: '',
+          isPaid: ''
         });
 
         const form = ref({
@@ -538,12 +547,13 @@
             purchaser: batchEditForm.value.purchaser,
             exchangeRate: batchEditForm.value.exchangeRate,
             fee: batchEditForm.value.fee,
-            krwPrice: batchEditForm.value.krwPrice // <-- 確保這行有傳出去
+            krwPrice: batchEditForm.value.krwPrice,
+            isPaid: batchEditForm.value.isPaid
           });
           
           showBatchEditModal.value = false;
           // 重置表單增加 krwPrice
-          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '' };
+          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '' };
           selectedIds.value = [];
           setTimeout(fetchData, 1500);
         };
