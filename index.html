@@ -22,9 +22,17 @@
       <div>
         <div class="flex items-center gap-3">
           <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-widest text-white">T1 Shopping</h1>
-          <select v-model="currentEvent" @change="fetchData" class="bg-gray-800 text-red-400 font-bold text-lg md:text-xl px-3 py-1 rounded-lg border border-gray-700 focus:ring-2 focus:ring-red-600 focus:outline-none cursor-pointer">
-            <option v-for="ev in events" :key="ev" :value="ev">{{ ev }}</option>
-          </select>
+          <div class="relative group flex items-center">
+            <select v-model="currentEvent" @change="fetchData" 
+                    class="appearance-none bg-gradient-to-b from-gray-800 to-gray-900 text-red-400 font-bold text-base md:text-lg px-3 py-1 pr-9 rounded-lg border border-gray-700 shadow-md hover:border-red-500/50 hover:shadow-[0_0_10px_rgba(220,38,38,0.2)] focus:ring-2 focus:ring-red-600/50 focus:border-red-500 focus:outline-none cursor-pointer transition-all duration-300 tracking-wide">
+              <option v-for="ev in events" :key="ev" :value="ev" class="bg-gray-900 text-gray-200">{{ ev }}</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-500 group-hover:text-red-400 transition-colors duration-300">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
         </div>
         <p class="text-gray-500 text-sm mt-1">PRO RECORD SYSTEM V5 (DYNAMIC SHEETS)</p>
       </div>
