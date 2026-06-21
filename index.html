@@ -18,6 +18,7 @@
       <p class="text-white font-bold tracking-widest animate-pulse text-lg">資料同步中，請稍候...</p>
       <p class="text-gray-500 text-xs mt-2">Connecting to Google Sheets</p>
     </div>
+    
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-l-4 border-red-600 pl-4 gap-4">
       <div>
         <div class="flex items-center gap-3">
@@ -34,18 +35,19 @@
             </div>
           </div>
         </div>
+        <p class="text-gray-500 text-sm mt-1">PRO RECORD SYSTEM V5</p>
       </div>
       <div class="flex flex-wrap gap-3 w-full md:w-auto">
         <button v-if="selectedIds.length > 0" @click="showBatchEditModal = true" class="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg text-sm animate-pulse">
           ✏️ 批次編輯 ({{ selectedIds.length }})
         </button>
-        <button @click="openTemplateModal" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg">
+        <button @click="openTemplateModal" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg text-sm">
           ⚡ 快速輸入商品 
         </button>
       </div>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">目前篩選韓元總額</p>
         <p class="text-3xl font-black text-blue-400">₩ {{ filteredKrwTotal }}</p>
@@ -57,6 +59,19 @@
       <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">剩餘待付金額</p>
         <p class="text-3xl font-black text-red-500">NT$ {{ pendingTotal.toLocaleString() }}</p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden group">
+        <div class="flex justify-between items-center mb-1">
+          <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">當前篩選滿額禮</p>
+          <div class="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-800/80 px-2 py-0.5 rounded-md border border-gray-700">
+            <span>每滿</span>
+            <input type="number" v-model.number="giftThreshold" class="w-12 bg-transparent text-center text-yellow-500 font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            <span>元送 1 張</span>
+          </div>
+        </div>
+        <p class="text-3xl font-black text-yellow-500">
+          {{ photoCardCount }} <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">張小卡</span>
+        </p>
       </div>
     </div>
 
@@ -141,7 +156,6 @@
       <div class="bg-gray-900 border border-yellow-800/50 rounded-3xl w-full max-w-lg p-8 shadow-2xl">
         <h2 class="text-xl font-bold mb-2 text-yellow-500">✏️ 批次編輯 {{ selectedIds.length }} 筆項目</h2>
         <p class="text-xs text-gray-400 mb-6 border-b border-gray-800 pb-4">設定你想要統一修改的欄位。<span class="text-red-400">若不修改請保持留白或「不變更」。</span></p>
-        
         <div class="space-y-5">
           <div class="grid grid-cols-2 gap-4">
             <label class="block"><span class="text-xs text-gray-400">統一修改：購買日</span>
@@ -157,13 +171,11 @@
               </select>
             </label>
           </div>
-
           <div class="grid grid-cols-1 gap-4">
             <label class="block"><span class="text-xs text-gray-400">統一修改：韓元單價</span>
               <input type="number" v-model="batchEditForm.krwPrice" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
             </label>
           </div>
-
           <div class="grid grid-cols-2 gap-4">
             <label class="block"><span class="text-xs text-gray-400">統一修改：匯率</span>
               <input type="number" step="0.00001" v-model="batchEditForm.exchangeRate" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
@@ -177,7 +189,6 @@
             </label>
           </div>
         </div>
-        
         <div class="mt-8 flex gap-3">
           <button @click="submitBatchEdit" class="flex-1 bg-yellow-600 p-3 rounded-xl font-bold hover:bg-yellow-700 text-white transition">套用並重新計算台幣</button>
           <button @click="showBatchEditModal = false" class="px-6 py-3 bg-gray-800 rounded-xl font-bold text-gray-300 hover:text-white transition">取消</button>
@@ -197,24 +208,19 @@
         
         <div class="p-6 overflow-y-auto no-scrollbar flex-1">
           <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-            
             <div v-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">
               您的「{{ currentEvent }} 套版」資料表中尚未建立任何資料！
             </div>
-        
             <div v-for="(tpl, idx) in templateData" :key="idx" 
                  @click="tpl.selected = !tpl.selected"
                  :class="tpl.selected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-800 bg-gray-800/50'"
                  class="relative rounded-2xl border-2 transition-all duration-200 overflow-hidden group cursor-pointer hover:border-gray-600">
-              
               <div v-if="tpl.selected" class="absolute top-2 right-2 z-10 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg">✓</div>
-        
               <div class="h-32 bg-black relative">
                 <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition">
                 <div v-else class="w-full h-full flex items-center justify-center text-gray-600 text-sm">無圖</div>
                 <div class="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] rounded backdrop-blur-sm border border-gray-600 uppercase">{{ tpl.選手 || '無選手' }}</div>
               </div>
-        
               <div class="p-3">
                 <div class="text-[10px] text-gray-500">{{ tpl.編號 || '無編號' }}</div>
                 <div class="font-bold text-white text-xs leading-tight mt-0.5 line-clamp-3" :title="tpl.商品名稱">
@@ -222,7 +228,6 @@
                 </div>
                 <div class="mt-2 text-red-400 font-mono text-xs font-bold">₩ {{ Number(tpl.韓元價格).toLocaleString() }}</div>
               </div>
-        
             </div>
           </div>
         </div>
@@ -239,7 +244,6 @@
               <option v-for="p in options.purchasers" :value="p">{{p}}</option>
             </select>
           </div>
-
           <div class="flex items-center gap-3 w-full md:w-auto">
             <span class="text-sm text-gray-400 hidden md:inline">已選 <strong class="text-white text-lg">{{ selectedTemplateCount }}</strong> 項</span>
             <button @click="showTemplateModal = false" class="px-5 py-2.5 bg-gray-800 rounded-xl font-bold text-gray-300">取消</button>
@@ -256,7 +260,6 @@
     <div v-if="showModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
         <h2 class="text-2xl font-bold mb-8 border-b border-gray-800 pb-4">{{ modalAction === 'add' ? '手動新增紀錄' : '編輯購物紀錄' }}</h2>
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div class="space-y-5">
             <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買日</span>
@@ -270,7 +273,6 @@
               <input v-model="form.photoUrl" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
             </label>
           </div>
-          
           <div class="space-y-5">
             <div class="grid grid-cols-2 gap-2">
               <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買人</span>
@@ -280,7 +282,6 @@
                 <select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="pl in options.players" :value="pl">{{pl}}</option></select>
               </label>
             </div>
-            
             <div class="grid grid-cols-3 gap-2">
               <label class="block"><span class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">件數</span>
                 <input type="number" min="1" v-model="form.quantity" class="w-full bg-blue-900/20 text-blue-300 border border-blue-900/50 rounded-xl p-3 mt-1 text-center font-bold">
@@ -289,7 +290,6 @@
                 <input type="number" v-model="form.krwPrice" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
               </label>
             </div>
-
             <div class="grid grid-cols-2 gap-2">
               <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">匯率</span>
                 <input type="number" step="0.00001" v-model="form.exchangeRate" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
@@ -300,7 +300,6 @@
                 </div>
               </label>
             </div>
-            
             <div class="p-4 bg-red-900/10 rounded-2xl border border-red-900/20">
               <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">預估總額 (單價 * 件數 * 匯率 + 手續費)</p>
               <p class="text-3xl font-black">NT$ {{ Math.round((form.krwPrice * form.quantity * form.exchangeRate) + Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015)).toLocaleString() }}</p>
@@ -315,7 +314,6 @@
             </label>
           </div>
         </div>
-
         <div class="mt-8 flex gap-3">
           <button @click="saveItem" class="flex-1 bg-red-600 p-4 rounded-xl font-bold hover:bg-red-700 text-white">儲存</button>
           <button @click="showModal = false" class="px-8 py-4 bg-gray-800 rounded-xl font-bold text-gray-300 hover:text-white">取消</button>
@@ -331,21 +329,19 @@
     const { createApp, ref, computed, onMounted } = Vue;
     createApp({
       setup() {
-        // ✅ 新增：場次與下拉清單資料狀態
         const events = ref([]);
         const currentEvent = ref('');
+        const thresholds = ref({}); // 💡 儲存各個月份門檻對照表
 
         const list = ref([]);
         const templateData = ref([]); 
         const sortByItemAndPlayer = ref(false);
         
-        // Modal 控制
         const showModal = ref(false);
         const showTemplateModal = ref(false);
         const showBatchEditModal = ref(false);
         const modalAction = ref('add');
         
-        // 主畫面選擇狀態
         const selectedIds = ref([]);
         const isAllSelected = computed(() => filteredList.value.length > 0 && selectedIds.value.length === filteredList.value.length);
         
@@ -357,7 +353,6 @@
         };
         
         const batchForm = ref({ date: '', purchaser: '' });
-        
         const batchEditForm = ref({ 
           date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: ''
         });
@@ -370,39 +365,35 @@
 
         const isLoading = ref(false);
         const fetchError = ref('');
-        
-        // ✅ 修改 3：抓取資料時帶入目前的場次
+        const giftThreshold = ref(1000); // 滿額禮當前門檻數值
+
         const fetchData = async () => {
           isLoading.value = true;
           fetchError.value = ''; 
-          
           try {
-            // 若下拉選單有值，將 event 作為參數送到後端
             const url = currentEvent.value ? `${GAS_URL}?event=${encodeURIComponent(currentEvent.value)}` : GAS_URL;
             const res = await fetch(url);
             const text = await res.text(); 
             
             let data;
-            try {
-              data = JSON.parse(text);
-            } catch (err) {
-              console.error("Google 回傳的不是資料，而是這個網頁：", text);
-              throw new Error("Google 阻擋了讀取！這 100% 是因為 GAS 部署權限設定錯誤。");
-            }
+            try { data = JSON.parse(text); } catch (err) { throw new Error("Google 阻擋了讀取！"); }
 
-            // 更新場次清單與當前場次
             events.value = data.events || [];
-            if (data.currentEvent) {
-              currentEvent.value = data.currentEvent;
+            if (data.currentEvent) currentEvent.value = data.currentEvent;
+
+            // 💡 讀取並動態更新目前月份的滿額禮預設金額
+            thresholds.value = data.thresholds || {};
+            if (thresholds.value[currentEvent.value] !== undefined) {
+              giftThreshold.value = thresholds.value[currentEvent.value];
+            } else {
+              giftThreshold.value = 1000; 
             }
 
             list.value = data.records || [];
             templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
             selectedIds.value = []; 
-            
           } catch (e) {
-            console.error("抓取資料時發生致命錯誤:", e);
-            fetchError.value = e.message || "發生跨域錯誤 (CORS)，請檢查 GAS 部署權限。";
+            fetchError.value = e.message || "發生跨域錯誤 (CORS)";
           } finally {
             isLoading.value = false; 
           }
@@ -414,17 +405,12 @@
             (!filters.value.purchaser || i.購買人 == filters.value.purchaser) &&
             (!filters.value.player || i.選手 == filters.value.player)
           );
-        
           if (sortByItemAndPlayer.value) {
             result.sort((a, b) => {
               const nameA = a.商品名稱 || '';
               const nameB = b.商品名稱 || '';
-              if (nameA !== nameB) {
-                return nameA.localeCompare(nameB, 'zh-TW');
-              }
-              const playerA = a.選手 || '';
-              const playerB = b.選手 || '';
-              return playerA.localeCompare(playerB, 'zh-TW');
+              if (nameA !== nameB) return nameA.localeCompare(nameB, 'zh-TW');
+              return (a.選手 || '').localeCompare((b.選手 || ''), 'zh-TW');
             });
           }
           return result;
@@ -435,34 +421,22 @@
           const rate = Number(item.韓元匯率) || 0;
           const qty = Number(item.件數) || 1;
           const baseTwd = krw * rate * qty;
-          const fee = Math.round(baseTwd * 0.015);
-          return Math.round(baseTwd + fee);
+          return Math.round(baseTwd + Math.round(baseTwd * 0.015));
         };
 
-        const filteredKrwTotal = computed(() => {
-          const total = filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0);
-          return Math.round(total).toLocaleString(); 
-        });
+        const filteredTotalNum = computed(() => filteredList.value.reduce((s, i) => s + getItemTwd(i), 0));
+        const filteredKrwTotal = computed(() => Math.round(filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0)).toLocaleString());
+        const filteredTotal = computed(() => filteredTotalNum.value.toLocaleString());
+        const pendingTotal = computed(() => Math.round(filteredList.value.reduce((s, i) => (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0)).toLocaleString());
 
-        const filteredTotal = computed(() => {
-          const total = filteredList.value.reduce((s, i) => s + getItemTwd(i), 0);
-          return Math.round(total).toLocaleString();
-        });
-        
-        const pendingTotal = computed(() => {
-          const total = filteredList.value.reduce((s, i) => {
-            const paid = i.是否付費 == 'TRUE' || i.是否付費 === true;
-            return s + (paid ? 0 : getItemTwd(i));
-          }, 0);
-          return Math.round(total).toLocaleString();
+        // 💡 計算滿額小卡張數（完美與下拉選單的過濾、動態月份門檻同步連動）
+        const photoCardCount = computed(() => {
+          if (!giftThreshold.value || giftThreshold.value <= 0) return 0;
+          return Math.floor(filteredTotalNum.value / giftThreshold.value);
         });
 
         const selectedTemplateCount = computed(() => templateData.value.filter(t => t.selected).length);
-
-        const toggleAll = (e) => {
-          if (e.target.checked) selectedIds.value = filteredList.value.map(i => i.ID);
-          else selectedIds.value = [];
-        };
+        const toggleAll = (e) => selectedIds.value = e.target.checked ? filteredList.value.map(i => i.ID) : [];
 
         const openModal = (action, item = null) => {
           modalAction.value = action;
@@ -470,15 +444,10 @@
             form.value = { 
               id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, quantity: Number(item.件數) || 1, photoUrl: item.照片 || '',
               purchaser: item.購買人, player: item.選手, isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
-              krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費),
-              remark: item.備註 || ''
+              krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費), remark: item.備註 || ''
             };
           } else {
-            form.value = { 
-              id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', 
-              purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, 
-              remark: ''
-            };
+            form.value = { id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' };
           }
           showModal.value = true;
         };
@@ -489,75 +458,36 @@
           showTemplateModal.value = true;
         };
 
-        // ✅ 修改 4：發送 POST 時，必須補上目前的場次名稱
         const sendPostRequest = async (payload) => {
           isLoading.value = true;
-          fetchError.value = '';
-          
-          // 強制將當前選擇的場次加入送出的資料中
           payload.eventName = currentEvent.value;
-
           try {
-            await fetch(GAS_URL, {
-              method: 'POST',
-              mode: 'no-cors', 
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(payload)
-            });
-          } catch (error) {
-            console.log('忽略跨域阻擋');
-          }
-          setTimeout(() => fetchData(), 1500); 
-        };
-
-        const saveItem = async () => {
-          const calcFee = Math.round(form.value.krwPrice * form.value.quantity * form.value.exchangeRate * 0.015);
-          form.value.fee = calcFee;
-          
-          const payload = { ...form.value, action: modalAction.value };
-          await sendPostRequest(payload);
-          showModal.value = false;
-        };
-
-        // ✅ 修改 5：刪除資料時也必須帶入目前的場次名稱
-        const deleteItem = async (id) => {
-          if(!confirm('確定要刪除這筆紀錄嗎？')) return;
-          isLoading.value = true;
-          try {
-            await fetch(GAS_URL, { 
-              method: 'POST', 
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ id, action: 'delete', eventName: currentEvent.value }) 
-            });
+            await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
           } catch (error) {}
           setTimeout(() => fetchData(), 1500); 
         };
 
+        const saveItem = async () => {
+          form.value.fee = Math.round(form.value.krwPrice * form.value.quantity * form.value.exchangeRate * 0.015);
+          await sendPostRequest({ ...form.value, action: modalAction.value });
+          showModal.value = false;
+        };
+
+        const deleteItem = async (id) => {
+          if(!confirm('確定要刪除這筆紀錄嗎？')) return;
+          isLoading.value = true;
+          try { await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ id, action: 'delete', eventName: currentEvent.value }) }); } catch (error) {}
+          setTimeout(() => fetchData(), 1500); 
+        };
+
         const submitBatchAdd = async () => {
-          const selectedItems = templateData.value.filter(t => t.selected).map(t => ({
-            itemId: t.編號, itemName: t.商品名稱, photoUrl: t.照片, krwPrice: t.韓元價格, player: t.選手
-          }));
-          
-          await sendPostRequest({ 
-            action: 'batchAdd', items: selectedItems, date: batchForm.value.date, purchaser: batchForm.value.purchaser 
-          });
-          
+          const selectedItems = templateData.value.filter(t => t.selected).map(t => ({ itemId: t.編號, itemName: t.商品名稱, photoUrl: t.照片, krwPrice: t.韓元價格, player: t.選手 }));
+          await sendPostRequest({ action: 'batchAdd', items: selectedItems, date: batchForm.value.date, purchaser: batchForm.value.purchaser });
           showTemplateModal.value = false;
         };
 
         const submitBatchEdit = async () => {
-          await sendPostRequest({
-            action: 'batchUpdate', 
-            ids: selectedIds.value, 
-            date: batchEditForm.value.date, 
-            purchaser: batchEditForm.value.purchaser,
-            exchangeRate: batchEditForm.value.exchangeRate,
-            fee: batchEditForm.value.fee,
-            krwPrice: batchEditForm.value.krwPrice,
-            isPaid: batchEditForm.value.isPaid
-          });
-          
+          await sendPostRequest({ action: 'batchUpdate', ids: selectedIds.value, date: batchEditForm.value.date, purchaser: batchEditForm.value.purchaser, exchangeRate: batchEditForm.value.exchangeRate, fee: batchEditForm.value.fee, krwPrice: batchEditForm.value.krwPrice, isPaid: batchEditForm.value.isPaid });
           showBatchEditModal.value = false;
           batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '' };
           selectedIds.value = [];
@@ -566,14 +496,11 @@
         onMounted(fetchData);
 
         return { 
-          // 輸出新增的變數給 Vue 模板使用
-          events, currentEvent,
-          
+          events, currentEvent, thresholds, giftThreshold, photoCardCount,
           isLoading, fetchError, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd,
-          fetchData
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd, fetchData
         };
       }
     }).mount('#app');
