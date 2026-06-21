@@ -64,9 +64,9 @@
         <div class="flex justify-between items-center mb-1">
           <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">當前篩選滿額禮</p>
           <div class="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-800/80 px-2 py-0.5 rounded-md border border-gray-700">
-            <span>每滿</span>
-            <input type="number" v-model.number="giftThreshold" class="w-12 bg-transparent text-center text-yellow-500 font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-            <span>元送 1 張</span>
+            <span>每滿 ₩</span>
+            <input type="number" v-model.number="giftThreshold" class="w-16 bg-transparent text-center text-yellow-500 font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            <span>送 1 張</span>
           </div>
         </div>
         <p class="text-3xl font-black text-yellow-500">
@@ -425,14 +425,20 @@
         };
 
         const filteredTotalNum = computed(() => filteredList.value.reduce((s, i) => s + getItemTwd(i), 0));
-        const filteredKrwTotal = computed(() => Math.round(filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0)).toLocaleString());
+        
+        // 👇 新增：計算當前篩選下的「韓元純數字總額」
+        const filteredKrwTotalNum = computed(() => filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0));
+        
+        // 將韓元總額加上千分位逗號供畫面顯示
+        const filteredKrwTotal = computed(() => Math.round(filteredKrwTotalNum.value).toLocaleString());
+        
         const filteredTotal = computed(() => filteredTotalNum.value.toLocaleString());
         const pendingTotal = computed(() => Math.round(filteredList.value.reduce((s, i) => (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0)).toLocaleString());
 
-        // 💡 計算滿額小卡張數（完美與下拉選單的過濾、動態月份門檻同步連動）
+        // 💡 改用「韓元純數字總額 (filteredKrwTotalNum)」來計算滿額小卡張數
         const photoCardCount = computed(() => {
           if (!giftThreshold.value || giftThreshold.value <= 0) return 0;
-          return Math.floor(filteredTotalNum.value / giftThreshold.value);
+          return Math.floor(filteredKrwTotalNum.value / giftThreshold.value);
         });
 
         const selectedTemplateCount = computed(() => templateData.value.filter(t => t.selected).length);
