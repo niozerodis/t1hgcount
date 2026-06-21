@@ -38,6 +38,9 @@
         <p class="text-gray-500 text-sm mt-1">PRO RECORD SYSTEM V5</p>
       </div>
       <div class="flex flex-wrap gap-3 w-full md:w-auto">
+        <button v-if="selectedIds.length > 0" @click="submitBatchDelete" class="bg-red-800 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg text-sm border border-red-600">
+          🗑️ 批次刪除 ({{ selectedIds.length }})
+        </button>
         <button v-if="selectedIds.length > 0" @click="showBatchEditModal = true" class="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg text-sm animate-pulse">
           ✏️ 批次編輯 ({{ selectedIds.length }})
         </button>
@@ -499,6 +502,17 @@
           selectedIds.value = [];
         };
 
+        const submitBatchDelete = async () => {
+          if (!confirm(`確定要一口氣刪除選取的 ${selectedIds.value.length} 筆紀錄嗎？\n(⚠️ 此動作無法復原)`)) return;
+          
+          await sendPostRequest({ 
+            action: 'batchDelete', 
+            ids: selectedIds.value 
+          });
+          
+          selectedIds.value = []; // 刪除完清空勾選狀態
+        };
+
         onMounted(fetchData);
 
         return { 
@@ -506,7 +520,7 @@
           isLoading, fetchError, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd, fetchData
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, submitBatchDelete, getItemTwd, fetchData
         };
       }
     }).mount('#app');
