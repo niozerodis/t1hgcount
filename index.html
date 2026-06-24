@@ -34,6 +34,10 @@
         </div>
       </div>
       <div class="flex flex-wrap gap-3 w-full md:w-auto">
+        <!-- 💰 新增二補費用按鈕 -->
+        <button @click="openSpModal" class="bg-purple-700 hover:bg-purple-600 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg text-sm border border-purple-600">
+          💰 二補費用設定
+        </button>
         <button v-if="selectedIds.length > 0" @click="submitBatchDelete" class="bg-red-800 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg text-sm border border-red-600">
           🗑️ 批次刪除 ({{ selectedIds.length }})
         </button>
@@ -46,7 +50,8 @@
       </div>
     </header>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <!-- 頂部統計看板（還原 4 欄佈局，防跑版） -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">目前篩選韓元總額</p>
         <p class="text-3xl font-black text-blue-400">₩ {{ filteredKrwTotal }}</p>
@@ -60,29 +65,20 @@
         <p class="text-3xl font-black text-red-500">NT$ {{ pendingTotal.toLocaleString() }}</p>
       </div>
       
-      <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden flex flex-col justify-center">
-        <div class="flex justify-between items-center mb-1">
-          <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">當前篩選滿額禮</p>
-          <div class="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-800/80 px-2 py-0.5 rounded-md border border-gray-700">
-            <span>每滿 ₩</span>
-            <input type="number" v-model.number="giftThreshold" class="w-16 bg-transparent text-center text-yellow-500 font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+      <!-- 🎁 滿額禮卡片 (防擠壓跑版設計) -->
+      <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden flex flex-col justify-between">
+        <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+          <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] shrink-0">篩選滿額禮</p>
+          <div class="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-800/80 px-2 py-1 rounded-md border border-gray-700 whitespace-nowrap">
+            <span>滿 ₩</span>
+            <input type="number" v-model.number="giftThreshold" class="w-14 bg-transparent text-center text-yellow-500 font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
           </div>
         </div>
         <p class="text-3xl font-black text-yellow-500">{{ photoCardCount }} <span class="text-xs font-bold text-gray-500">張小卡</span></p>
       </div>
-
-      <div class="bg-gray-900 p-5 rounded-2xl border border-blue-900/50 shadow-xl relative overflow-hidden group flex flex-col justify-center">
-        <div class="flex justify-between items-center mb-1">
-          <p class="text-[10px] text-blue-400 font-bold uppercase tracking-[0.2em]">二補費用</p>
-          <button @click="saveSecondPayment" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white px-2 py-0.5 rounded border border-blue-500 transition-colors">儲存</button>
-        </div>
-        <div class="flex items-center">
-          <span class="text-xl font-black text-white mr-1">NT$</span>
-          <input type="number" v-model.number="secondPayment" placeholder="0" class="w-full bg-transparent text-3xl font-black text-white focus:outline-none focus:border-b border-blue-500/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-        </div>
-      </div>
     </div>
 
+    <!-- 篩選器區塊 -->
     <div class="bg-gray-900 p-4 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-4 gap-4 border border-gray-800 shadow-lg">
       <select v-model="filters.date" class="bg-gray-800 border-none rounded-lg p-2 focus:ring-2 focus:ring-red-600 text-sm">
         <option value="">所有購買日</option>
@@ -102,6 +98,7 @@
       </label>
     </div>
 
+    <!-- 清單表格 -->
     <div class="bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[800px]">
@@ -155,6 +152,46 @@
       </div>
     </div>
 
+    <!-- 💰 新增：獨立的二補費用彈窗 -->
+    <div v-if="showSpModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
+      <div class="bg-gray-900 border border-purple-800/50 rounded-3xl w-full max-w-md p-8 shadow-2xl">
+        <h2 class="text-xl font-bold mb-2 text-purple-400">💰 二補費用紀錄</h2>
+        <p class="text-xs text-gray-400 mb-6 border-b border-gray-800 pb-4">選擇購買日後，可針對不同購買人設定專屬二補費用。</p>
+
+        <label class="block mb-6">
+          <span class="text-xs text-gray-400">1. 請選擇購買日</span>
+          <select v-model="spForm.date" @change="loadSpForDate" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white cursor-pointer focus:ring-2 focus:ring-purple-600">
+            <option disabled value="">請選擇日期...</option>
+            <option v-for="d in options.dates" :value="d">{{d}}</option>
+          </select>
+        </label>
+
+        <div v-if="spForm.date" class="space-y-3 max-h-[40vh] overflow-y-auto no-scrollbar pr-2">
+          <p class="text-xs text-gray-400 mb-2">2. 輸入費用 (數字)</p>
+          
+          <label class="flex items-center justify-between bg-gray-800/50 p-3 rounded-xl border border-gray-700 hover:border-purple-500/50 transition">
+            <span class="text-sm font-bold text-gray-200">所有 (公積金/總額)</span>
+            <div class="flex items-center"><span class="text-gray-500 mr-2 text-xs">NT$</span>
+              <input type="number" v-model="spForm.amounts['所有']" class="w-24 bg-gray-900 border border-gray-600 focus:border-purple-500 rounded p-1.5 text-right text-white font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            </div>
+          </label>
+
+          <label v-for="p in options.purchasers" :key="p" class="flex items-center justify-between bg-gray-800/50 p-3 rounded-xl border border-gray-700 hover:border-purple-500/50 transition">
+            <span class="text-sm font-bold text-gray-300">購買人：{{ p }}</span>
+            <div class="flex items-center"><span class="text-gray-500 mr-2 text-xs">NT$</span>
+              <input type="number" v-model="spForm.amounts[p]" class="w-24 bg-gray-900 border border-gray-600 focus:border-purple-500 rounded p-1.5 text-right text-white font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            </div>
+          </label>
+        </div>
+
+        <div class="mt-8 flex gap-3">
+          <button @click="saveSpRecords" :disabled="!spForm.date" class="flex-1 bg-purple-600 p-3 rounded-xl font-bold hover:bg-purple-700 text-white disabled:bg-gray-700 disabled:text-gray-500 transition">儲存二補資料</button>
+          <button @click="showSpModal = false" class="px-6 py-3 bg-gray-800 rounded-xl font-bold text-gray-300 hover:text-white transition">關閉</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 批次編輯 Modal -->
     <div v-if="showBatchEditModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[60]">
       <div class="bg-gray-900 border border-yellow-800/50 rounded-3xl w-full max-w-lg p-8 shadow-2xl">
         <h2 class="text-xl font-bold mb-2 text-yellow-500">✏️ 批次編輯 {{ selectedIds.length }} 筆</h2>
@@ -192,6 +229,7 @@
       </div>
     </div>
 
+    <!-- 快速套版 Modal -->
     <div v-if="showTemplateModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-7xl max-h-[90vh] flex flex-col shadow-2xl">
         <div class="p-6 border-b border-gray-800 flex justify-between items-center shrink-0">
@@ -229,6 +267,7 @@
       </div>
     </div>
 
+    <!-- 單筆編輯 Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
         <h2 class="text-2xl font-bold mb-8 border-b border-gray-800 pb-4">{{ modalAction === 'add' ? '手動新增' : '編輯紀錄' }}</h2>
@@ -247,7 +286,7 @@
           <div class="space-y-5">
             <div class="grid grid-cols-2 gap-2">
               <label class="block"><span class="text-[10px] text-gray-500 uppercase">購買人</span><select v-model="form.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="p in options.purchasers" :value="p">{{p}}</option></select></label>
-              <label class="block"><span class="text-[10px] text-gray-500 uppercase">選手</span><select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="pl in options.players" :value="pl">{{pl}}</option></select></label>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase">選手</span><select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="pl in options.players" :valuepl="pl">{{pl}}</option></select></label>
             </div>
             <div class="grid grid-cols-3 gap-2">
               <label class="block"><span class="text-[10px] text-blue-400 font-bold uppercase">件數</span><input type="number" min="1" v-model="form.quantity" class="w-full bg-blue-900/20 text-blue-300 border border-blue-900/50 rounded-xl p-3 mt-1 text-center font-bold"></label>
@@ -296,6 +335,7 @@
         const events = ref([]);
         const currentEvent = ref('');
         const thresholds = ref({}); 
+        const secondPayments = ref([]); // 💡 儲存從後端抓回來的二補列表
 
         const list = ref([]);
         const templateData = ref([]); 
@@ -304,30 +344,23 @@
         const showModal = ref(false);
         const showTemplateModal = ref(false);
         const showBatchEditModal = ref(false);
+        const showSpModal = ref(false); // 💡 二補費用彈窗開關
         const modalAction = ref('add');
         
         const selectedIds = ref([]);
         const isAllSelected = computed(() => filteredList.value.length > 0 && selectedIds.value.length === filteredList.value.length);
-
-        const filters = ref({ date: '', purchaser: '', player: '' });
         
-        // 💡 變成響應式的變數，等資料抓回來後動態替換
-        const options = ref({
-          dates: [],
-          purchasers: [],
-          players: ['無', 'Doran', 'Oner', 'Faker', 'Peyz', 'Keria']
-        });
+        const filters = ref({ date: '', purchaser: '', player: '' });
+        const options = ref({ dates: [], purchasers: [], players: ['無', 'Doran', 'Oner', 'Faker', 'Peyz', 'Keria'] });
         
         const batchForm = ref({ date: '', purchaser: '' });
         const batchEditForm = ref({ date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '', isProxy: '' });
+        const spForm = ref({ date: '', amounts: {} }); // 💡 二補表單資料
 
-        const form = ref({
-          id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: ''
-        });
+        const form = ref({ id: null, date: '', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: '', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' });
 
         const isLoading = ref(false);
         const giftThreshold = ref(50000); 
-        const secondPayment = ref(0); 
 
         const fetchData = async () => {
           isLoading.value = true;
@@ -339,21 +372,24 @@
             events.value = data.events || [];
             if (data.currentEvent) currentEvent.value = data.currentEvent;
 
-            // 💡 讀取並動態更新目前月份的：門檻、二補、購買日、購買人
+            // 💡 每次載入或切換月份時，強制重置下拉選單
+            filters.value.date = '';
+            filters.value.purchaser = '';
+            filters.value.player = '';
+
             thresholds.value = data.thresholds || {};
             if (thresholds.value[currentEvent.value]) {
               const currentSettings = thresholds.value[currentEvent.value];
               giftThreshold.value = currentSettings.threshold;
-              secondPayment.value = currentSettings.secondPayment;
               options.value.dates = currentSettings.dates || [];
               options.value.purchasers = currentSettings.purchasers || [];
             } else {
               giftThreshold.value = 50000; 
-              secondPayment.value = 0;
               options.value.dates = [];
               options.value.purchasers = [];
             }
 
+            secondPayments.value = data.secondPayments || [];
             list.value = data.records || [];
             templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
             selectedIds.value = []; 
@@ -377,11 +413,8 @@
         });
         
         const getItemTwd = (item) => {
-          const krw = Number(item.韓元價格) || 0;
-          const rate = Number(item.韓元匯率) || 0;
-          const qty = Number(item.件數) || 1;
-          const baseTwd = krw * rate * qty;
-          const isProxy = item.代購 === true || item.代購 === 'TRUE';
+          const krw = Number(item.韓元價格) || 0; const rate = Number(item.韓元匯率) || 0; const qty = Number(item.件數) || 1;
+          const baseTwd = krw * rate * qty; const isProxy = item.代購 === true || item.代購 === 'TRUE';
           return Math.round(baseTwd + (isProxy ? 0 : Math.round(baseTwd * 0.015)));
         };
 
@@ -390,12 +423,7 @@
         const filteredKrwTotal = computed(() => Math.round(filteredKrwTotalNum.value).toLocaleString());
         const filteredTotal = computed(() => filteredTotalNum.value.toLocaleString());
         const pendingTotal = computed(() => Math.round(filteredList.value.reduce((s, i) => (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0)).toLocaleString());
-
-        const photoCardCount = computed(() => {
-          if (!giftThreshold.value || giftThreshold.value <= 0) return 0;
-          return Math.floor(filteredKrwTotalNum.value / giftThreshold.value);
-        });
-
+        const photoCardCount = computed(() => (!giftThreshold.value || giftThreshold.value <= 0) ? 0 : Math.floor(filteredKrwTotalNum.value / giftThreshold.value));
         const selectedTemplateCount = computed(() => templateData.value.filter(t => t.selected).length);
         const toggleAll = (e) => selectedIds.value = e.target.checked ? filteredList.value.map(i => i.ID) : [];
 
@@ -405,8 +433,7 @@
             form.value = { 
               id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, quantity: Number(item.件數) || 1, photoUrl: item.照片 || '',
               purchaser: item.購買人, player: item.選手, isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
-              isProxy: item.代購 == 'TRUE' || item.代購 === true,
-              krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費), remark: item.備註 || ''
+              isProxy: item.代購 == 'TRUE' || item.代購 === true, krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費), remark: item.備註 || ''
             };
           } else {
             form.value = { id: null, date: options.value.dates[0] || '', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: options.value.purchasers[0] || '', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' };
@@ -416,6 +443,27 @@
 
         const openTemplateModal = () => { templateData.value.forEach(t => t.selected = false); batchForm.value = { date: '', purchaser: '' }; showTemplateModal.value = true; };
 
+        // 💡 開啟並載入二補表單
+        const openSpModal = () => {
+          spForm.value.date = options.value.dates[0] || '';
+          loadSpForDate();
+          showSpModal.value = true;
+        };
+
+        // 💡 當選擇購買日時，載入對應的二補紀錄
+        const loadSpForDate = () => {
+          spForm.value.amounts = { '所有': 0 };
+          options.value.purchasers.forEach(p => spForm.value.amounts[p] = 0);
+
+          if (!spForm.value.date) return;
+          const matches = secondPayments.value.filter(sp => sp['購買日'] === spForm.value.date);
+          matches.forEach(m => {
+             if (spForm.value.amounts[m['購買人']] !== undefined) {
+               spForm.value.amounts[m['購買人']] = Number(m['二補費用(TWD)']) || 0;
+             }
+          });
+        };
+
         const sendPostRequest = async (payload) => {
           isLoading.value = true;
           payload.eventName = currentEvent.value;
@@ -423,33 +471,14 @@
           setTimeout(() => fetchData(), 1500); 
         };
 
-        const saveItem = async () => {
-          await sendPostRequest({ ...form.value, action: modalAction.value });
-          showModal.value = false;
-        };
-
-        const saveSecondPayment = async () => {
-          isLoading.value = true;
-          try { await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'updateSecondPayment', eventName: currentEvent.value, secondPayment: secondPayment.value }) }); } catch (error) {}
-          setTimeout(() => fetchData(), 1500); 
-        };
-
-        const deleteItem = async (id) => {
-          if(!confirm('確定要刪除這筆紀錄嗎？')) return;
-          await sendPostRequest({ action: 'delete', id: id });
-        };
-        const submitBatchDelete = async () => {
-          if (!confirm(`確定要一口氣刪除選取的 ${selectedIds.value.length} 筆嗎？`)) return;
-          await sendPostRequest({ action: 'batchDelete', ids: selectedIds.value });
-          selectedIds.value = [];
-        };
-
+        const saveItem = async () => { await sendPostRequest({ ...form.value, action: modalAction.value }); showModal.value = false; };
+        const deleteItem = async (id) => { if(!confirm('確定要刪除這筆紀錄嗎？')) return; await sendPostRequest({ action: 'delete', id: id }); };
+        const submitBatchDelete = async () => { if (!confirm(`確定要一口氣刪除選取的 ${selectedIds.value.length} 筆嗎？`)) return; await sendPostRequest({ action: 'batchDelete', ids: selectedIds.value }); selectedIds.value = []; };
         const submitBatchAdd = async () => {
           const selectedItems = templateData.value.filter(t => t.selected).map(t => ({ itemId: t.編號, itemName: t.商品名稱, photoUrl: t.照片, krwPrice: t.韓元價格, player: t.選手 }));
           await sendPostRequest({ action: 'batchAdd', items: selectedItems, date: batchForm.value.date, purchaser: batchForm.value.purchaser });
           showTemplateModal.value = false;
         };
-
         const submitBatchEdit = async () => {
           await sendPostRequest({ action: 'batchUpdate', ids: selectedIds.value, date: batchEditForm.value.date, purchaser: batchEditForm.value.purchaser, exchangeRate: batchEditForm.value.exchangeRate, fee: batchEditForm.value.fee, krwPrice: batchEditForm.value.krwPrice, isPaid: batchEditForm.value.isPaid, isProxy: batchEditForm.value.isProxy });
           showBatchEditModal.value = false;
@@ -457,10 +486,19 @@
           selectedIds.value = [];
         };
 
+        // 💡 儲存二補資料
+        const saveSpRecords = async () => {
+          const records = [];
+          for (const [purchaser, amount] of Object.entries(spForm.value.amounts)) { records.push({ purchaser, amount }); }
+          await sendPostRequest({ action: 'saveSecondPayments', date: spForm.value.date, records: records });
+          showSpModal.value = false;
+        };
+
         onMounted(fetchData);
 
         return { 
-          events, currentEvent, thresholds, giftThreshold, photoCardCount, secondPayment, saveSecondPayment,
+          events, currentEvent, thresholds, giftThreshold, photoCardCount,
+          showSpModal, spForm, loadSpForDate, openSpModal, saveSpRecords,
           isLoading, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem, submitBatchDelete,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
