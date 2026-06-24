@@ -16,7 +16,6 @@
     <div v-if="isLoading" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity">
       <div class="w-16 h-16 border-4 border-gray-700 border-t-red-600 rounded-full animate-spin mb-6 shadow-[0_0_15px_rgba(220,38,38,0.5)]"></div>
       <p class="text-white font-bold tracking-widest animate-pulse text-lg">資料同步中，請稍候...</p>
-      <p class="text-gray-500 text-xs mt-2">Connecting to Google Sheets</p>
     </div>
     
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-l-4 border-red-600 pl-4 gap-4">
@@ -29,9 +28,7 @@
               <option v-for="ev in events" :key="ev" :value="ev" class="bg-gray-900 text-gray-200">{{ ev }}</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-500 group-hover:text-red-400 transition-colors duration-300">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
-              </svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
         </div>
@@ -49,7 +46,7 @@
       </div>
     </header>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
       <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">目前篩選韓元總額</p>
         <p class="text-3xl font-black text-blue-400">₩ {{ filteredKrwTotal }}</p>
@@ -62,18 +59,27 @@
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">剩餘待付金額</p>
         <p class="text-3xl font-black text-red-500">NT$ {{ pendingTotal.toLocaleString() }}</p>
       </div>
-      <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden group">
+      
+      <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden flex flex-col justify-center">
         <div class="flex justify-between items-center mb-1">
           <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">當前篩選滿額禮</p>
           <div class="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-800/80 px-2 py-0.5 rounded-md border border-gray-700">
             <span>每滿 ₩</span>
             <input type="number" v-model.number="giftThreshold" class="w-16 bg-transparent text-center text-yellow-500 font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-            <span>送 1 張</span>
           </div>
         </div>
-        <p class="text-3xl font-black text-yellow-500">
-          {{ photoCardCount }} <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">張小卡</span>
-        </p>
+        <p class="text-3xl font-black text-yellow-500">{{ photoCardCount }} <span class="text-xs font-bold text-gray-500">張小卡</span></p>
+      </div>
+
+      <div class="bg-gray-900 p-5 rounded-2xl border border-blue-900/50 shadow-xl relative overflow-hidden group flex flex-col justify-center">
+        <div class="flex justify-between items-center mb-1">
+          <p class="text-[10px] text-blue-400 font-bold uppercase tracking-[0.2em]">全域二補費用</p>
+          <button @click="saveSecondPayment" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white px-2 py-0.5 rounded border border-blue-500 transition-colors">儲存</button>
+        </div>
+        <div class="flex items-center">
+          <span class="text-xl font-black text-white mr-1">NT$</span>
+          <input type="number" v-model.number="secondPayment" placeholder="0" class="w-full bg-transparent text-3xl font-black text-white focus:outline-none focus:border-b border-blue-500/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+        </div>
       </div>
     </div>
 
@@ -101,9 +107,7 @@
         <table class="w-full text-left border-collapse min-w-[800px]">
           <thead class="bg-gray-800 text-[10px] uppercase text-gray-400 font-bold tracking-widest whitespace-nowrap">
             <tr>
-              <th class="p-4 w-12 text-center">
-                <input type="checkbox" :checked="isAllSelected" @change="toggleAll" class="w-4 h-4 rounded border-gray-600 text-red-600 focus:ring-0 cursor-pointer">
-              </th>
+              <th class="p-4 w-12 text-center"><input type="checkbox" :checked="isAllSelected" @change="toggleAll" class="w-4 h-4 rounded border-gray-600 text-red-600 focus:ring-0 cursor-pointer"></th>
               <th class="p-4 w-20">照片</th>
               <th class="p-4">商品明細</th>
               <th class="p-4 text-center">件數</th>
@@ -116,17 +120,16 @@
           <tbody class="divide-y divide-gray-800">
             <tr v-if="filteredList.length === 0" class="text-center text-gray-500"><td colspan="8" class="p-8">無資料</td></tr>
             <tr v-for="item in filteredList" :key="item.ID" class="hover:bg-gray-800/50 transition group" :class="{'bg-gray-800/30': selectedIds.includes(item.ID)}">
-              <td class="p-4 text-center">
-                <input type="checkbox" :value="item.ID" v-model="selectedIds" class="w-4 h-4 rounded border-gray-600 text-red-600 focus:ring-0 cursor-pointer">
-              </td>
+              <td class="p-4 text-center"><input type="checkbox" :value="item.ID" v-model="selectedIds" class="w-4 h-4 rounded border-gray-600 text-red-600 focus:ring-0 cursor-pointer"></td>
               <td class="p-4">
-                <div v-if="item.照片" class="w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
-                  <img :src="item.照片" class="w-full h-full object-cover" @error="item.照片=''">
-                </div>
+                <div v-if="item.照片" class="w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-700"><img :src="item.照片" class="w-full h-full object-cover" @error="item.照片=''"></div>
                 <div v-else class="w-12 h-12 md:w-16 md:h-16 rounded-lg bg-gray-800 flex items-center justify-center text-[10px] text-gray-600">無圖</div>
               </td>
               <td class="p-4">
-                <div class="font-bold text-white text-sm md:text-base">{{ item.商品名稱 }}</div>
+                <div class="flex items-center gap-2">
+                  <div class="font-bold text-white text-sm md:text-base">{{ item.商品名稱 }}</div>
+                  <span v-if="item.代購 == 'TRUE' || item.代購 === true" class="bg-yellow-900/40 text-yellow-500 border border-yellow-700/50 px-1.5 py-0.5 rounded text-[10px] font-bold">代購</span>
+                </div>
                 <div class="text-[10px] md:text-xs text-gray-500 mt-1 uppercase">{{ item.商品編號 }} | {{ item.購買日 || '未填' }} | {{ item.購買人 || '未填' }} | {{ item.選手 }}</div>
               </td>
               <td class="p-4 text-center font-bold text-lg text-blue-400">x {{ item.件數 || 1 }}</td>
@@ -139,13 +142,11 @@
                   {{ item.是否付費 == 'TRUE' || item.是否付費 === true ? '已付費' : '未付費' }}
                 </span>
               </td>
-              <td class="p-4 text-xs text-gray-400">
-                {{ item.備註 || '-' }}
-              </td>
+              <td class="p-4 text-xs text-gray-400">{{ item.備註 || '-' }}</td>
               <td class="p-4 text-right">
                 <div class="flex justify-end space-x-2">
-                  <button @click="openModal('edit', item)" class="px-3 py-1.5 bg-gray-800 hover:bg-blue-600/20 text-gray-300 hover:text-blue-400 border border-gray-700 hover:border-blue-500/50 rounded-md text-xs font-medium transition-colors">編輯</button>
-                  <button @click="deleteItem(item.ID)" class="px-3 py-1.5 bg-gray-800 hover:bg-red-600/20 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-500/50 rounded-md text-xs font-medium transition-colors">刪除</button>
+                  <button @click="openModal('edit', item)" class="px-3 py-1.5 bg-gray-800 hover:bg-blue-600/20 text-gray-300 hover:text-blue-400 border border-gray-700 hover:border-blue-500/50 rounded-md text-xs transition-colors">編輯</button>
+                  <button @click="deleteItem(item.ID)" class="px-3 py-1.5 bg-gray-800 hover:bg-red-600/20 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-500/50 rounded-md text-xs transition-colors">刪除</button>
                 </div>
               </td>
             </tr>
@@ -156,44 +157,37 @@
 
     <div v-if="showBatchEditModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[60]">
       <div class="bg-gray-900 border border-yellow-800/50 rounded-3xl w-full max-w-lg p-8 shadow-2xl">
-        <h2 class="text-xl font-bold mb-2 text-yellow-500">✏️ 批次編輯 {{ selectedIds.length }} 筆項目</h2>
-        <p class="text-xs text-gray-400 mb-6 border-b border-gray-800 pb-4">設定你想要統一修改的欄位。<span class="text-red-400">若不修改請保持留白或「不變更」。</span></p>
-        <div class="space-y-5">
+        <h2 class="text-xl font-bold mb-2 text-yellow-500">✏️ 批次編輯 {{ selectedIds.length }} 筆</h2>
+        <p class="text-xs text-gray-400 mb-6 border-b border-gray-800 pb-4">設定想要修改的欄位，留白代表不變更。</p>
+        <div class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
-            <label class="block"><span class="text-xs text-gray-400">統一修改：購買日</span>
-              <select v-model="batchEditForm.date" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
-                <option value="">-- 不變更 --</option>
-                <option v-for="d in options.dates" :value="d">{{d}}</option>
-              </select>
+            <label class="block"><span class="text-xs text-gray-400">購買日</span>
+              <select v-model="batchEditForm.date" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white"><option value="">-- 不變更 --</option><option v-for="d in options.dates" :value="d">{{d}}</option></select>
             </label>
-            <label class="block"><span class="text-xs text-gray-400">統一修改：購買人</span>
-              <select v-model="batchEditForm.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
-                <option value="">-- 不變更 --</option>
-                <option v-for="p in options.purchasers" :value="p">{{p}}</option>
-              </select>
-            </label>
-          </div>
-          <div class="grid grid-cols-1 gap-4">
-            <label class="block"><span class="text-xs text-gray-400">統一修改：韓元單價</span>
-              <input type="number" v-model="batchEditForm.krwPrice" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
+            <label class="block"><span class="text-xs text-gray-400">購買人</span>
+              <select v-model="batchEditForm.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white"><option value="">-- 不變更 --</option><option v-for="p in options.purchasers" :value="p">{{p}}</option></select>
             </label>
           </div>
           <div class="grid grid-cols-2 gap-4">
-            <label class="block"><span class="text-xs text-gray-400">統一修改：匯率</span>
-              <input type="number" step="0.00001" v-model="batchEditForm.exchangeRate" placeholder="留白代表不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white placeholder-gray-600">
+            <label class="block"><span class="text-xs text-gray-400">韓元單價</span><input type="number" v-model="batchEditForm.krwPrice" placeholder="不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white"></label>
+            <label class="block"><span class="text-xs text-gray-400">匯率</span><input type="number" step="0.00001" v-model="batchEditForm.exchangeRate" placeholder="不變更" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white"></label>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="block"><span class="text-xs text-gray-400">付款狀態</span>
+              <select v-model="batchEditForm.isPaid" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white"><option value="">-- 不變更 --</option><option value="TRUE">已付費</option><option value="FALSE">未付費</option></select>
             </label>
-            <label class="block"><span class="text-xs text-gray-400">統一修改：付款狀態</span>
-              <select v-model="batchEditForm.isPaid" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-white">
+            <label class="block"><span class="text-xs text-yellow-500 font-bold">代購 / 代領 (免手續)</span>
+              <select v-model="batchEditForm.isProxy" class="w-full bg-gray-800 border border-yellow-700/50 rounded-xl p-3 mt-1 text-white">
                 <option value="">-- 不變更 --</option>
-                <option value="TRUE">標記為「已付費」</option>
-                <option value="FALSE">標記為「未付費」</option>
+                <option value="TRUE">是 (手續費歸零)</option>
+                <option value="FALSE">否 (正常計算)</option>
               </select>
             </label>
           </div>
         </div>
         <div class="mt-8 flex gap-3">
-          <button @click="submitBatchEdit" class="flex-1 bg-yellow-600 p-3 rounded-xl font-bold hover:bg-yellow-700 text-white transition">套用並重新計算台幣</button>
-          <button @click="showBatchEditModal = false" class="px-6 py-3 bg-gray-800 rounded-xl font-bold text-gray-300 hover:text-white transition">取消</button>
+          <button @click="submitBatchEdit" class="flex-1 bg-yellow-600 p-3 rounded-xl font-bold hover:bg-yellow-700 text-white">套用</button>
+          <button @click="showBatchEditModal = false" class="px-6 py-3 bg-gray-800 rounded-xl font-bold text-gray-300">取消</button>
         </div>
       </div>
     </div>
@@ -201,59 +195,35 @@
     <div v-if="showTemplateModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-7xl max-h-[90vh] flex flex-col shadow-2xl">
         <div class="p-6 border-b border-gray-800 flex justify-between items-center shrink-0">
-          <div>
-            <h2 class="text-2xl font-bold tracking-tight text-blue-400">⚡ 快速輸入商品</h2>
-            <p class="text-xs text-gray-500 mt-1">目前套版：<span class="text-red-400">{{ currentEvent }} 套版</span>。請勾選要買的商品，並在下方統一設定。</p>
-          </div>
+          <div><h2 class="text-2xl font-bold text-blue-400">⚡ 快速輸入商品</h2><p class="text-xs text-gray-500 mt-1">目前套版：<span class="text-red-400">{{ currentEvent }} 套版</span></p></div>
           <button @click="showTemplateModal = false" class="text-gray-500 hover:text-white text-3xl">&times;</button>
         </div>
-        
         <div class="p-6 overflow-y-auto no-scrollbar flex-1">
           <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-            <div v-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">
-              您的「{{ currentEvent }} 套版」資料表中尚未建立任何資料！
-            </div>
-            <div v-for="(tpl, idx) in templateData" :key="idx" 
-                 @click="tpl.selected = !tpl.selected"
-                 :class="tpl.selected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-800 bg-gray-800/50'"
-                 class="relative rounded-2xl border-2 transition-all duration-200 overflow-hidden group cursor-pointer hover:border-gray-600">
+            <div v-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">資料表中尚未建立套版資料！</div>
+            <div v-for="(tpl, idx) in templateData" :key="idx" @click="tpl.selected = !tpl.selected" :class="tpl.selected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-800 bg-gray-800/50'" class="relative rounded-2xl border-2 transition-all duration-200 overflow-hidden cursor-pointer">
               <div v-if="tpl.selected" class="absolute top-2 right-2 z-10 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg">✓</div>
               <div class="h-32 bg-black relative">
-                <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition">
+                <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-70">
                 <div v-else class="w-full h-full flex items-center justify-center text-gray-600 text-sm">無圖</div>
-                <div class="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] rounded backdrop-blur-sm border border-gray-600 uppercase">{{ tpl.選手 || '無選手' }}</div>
+                <div class="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] rounded">{{ tpl.選手 || '無' }}</div>
               </div>
               <div class="p-3">
-                <div class="text-[10px] text-gray-500">{{ tpl.編號 || '無編號' }}</div>
-                <div class="font-bold text-white text-xs leading-tight mt-0.5 line-clamp-3" :title="tpl.商品名稱">
-                  {{ tpl.商品名稱 || '未命名' }}
-                </div>
+                <div class="text-[10px] text-gray-500">{{ tpl.編號 || '無' }}</div>
+                <div class="font-bold text-white text-xs mt-0.5 line-clamp-2">{{ tpl.商品名稱 || '未命名' }}</div>
                 <div class="mt-2 text-red-400 font-mono text-xs font-bold">₩ {{ Number(tpl.韓元價格).toLocaleString() }}</div>
               </div>
             </div>
           </div>
         </div>
-
         <div class="p-4 border-t border-gray-800 bg-gray-900/90 shrink-0 flex flex-col md:flex-row items-center justify-between gap-4 rounded-3xl">
           <div class="flex items-center gap-3 w-full md:w-auto bg-gray-800 p-2 rounded-xl">
-            <span class="text-xs text-gray-400 pl-2">統一設定為：</span>
-            <select v-model="batchForm.date" class="bg-gray-900 border border-gray-700 rounded-lg p-2 text-sm text-white focus:ring-blue-500">
-              <option disabled value="">選擇購買日</option>
-              <option v-for="d in options.dates" :value="d">{{d}}</option>
-            </select>
-            <select v-model="batchForm.purchaser" class="bg-gray-900 border border-gray-700 rounded-lg p-2 text-sm text-white focus:ring-blue-500">
-              <option disabled value="">選擇購買人</option>
-              <option v-for="p in options.purchasers" :value="p">{{p}}</option>
-            </select>
+            <select v-model="batchForm.date" class="bg-gray-900 border border-gray-700 rounded-lg p-2 text-sm text-white"><option disabled value="">選擇購買日</option><option v-for="d in options.dates" :value="d">{{d}}</option></select>
+            <select v-model="batchForm.purchaser" class="bg-gray-900 border border-gray-700 rounded-lg p-2 text-sm text-white"><option disabled value="">選擇購買人</option><option v-for="p in options.purchasers" :value="p">{{p}}</option></select>
           </div>
-          <div class="flex items-center gap-3 w-full md:w-auto">
-            <span class="text-sm text-gray-400 hidden md:inline">已選 <strong class="text-white text-lg">{{ selectedTemplateCount }}</strong> 項</span>
+          <div class="flex items-center gap-3">
             <button @click="showTemplateModal = false" class="px-5 py-2.5 bg-gray-800 rounded-xl font-bold text-gray-300">取消</button>
-            <button @click="submitBatchAdd" :disabled="selectedTemplateCount === 0 || !batchForm.purchaser || !batchForm.date" 
-                    :class="(selectedTemplateCount > 0 && batchForm.purchaser && batchForm.date) ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'"
-                    class="px-6 py-2.5 rounded-xl font-bold transition flex-1 md:flex-none">
-              批次新增
-            </button>
+            <button @click="submitBatchAdd" :disabled="selectedTemplateCount === 0 || !batchForm.purchaser || !batchForm.date" class="px-6 py-2.5 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-700">批次新增 ({{ selectedTemplateCount }})</button>
           </div>
         </div>
       </div>
@@ -261,71 +231,63 @@
 
     <div v-if="showModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
-        <h2 class="text-2xl font-bold mb-8 border-b border-gray-800 pb-4">{{ modalAction === 'add' ? '手動新增紀錄' : '編輯購物紀錄' }}</h2>
+        <h2 class="text-2xl font-bold mb-8 border-b border-gray-800 pb-4">{{ modalAction === 'add' ? '手動新增' : '編輯紀錄' }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div class="space-y-5">
-            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買日</span>
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase">購買日</span>
               <select v-model="form.date" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option value="">(留空)</option><option v-for="d in options.dates" :value="d">{{d}}</option></select>
             </label>
-            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">商品編號 / 名稱</span>
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase">商品編號 / 名稱</span>
               <input v-model="form.itemId" placeholder="編號" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 mb-2">
               <input v-model="form.itemName" placeholder="商品名稱" class="w-full bg-gray-800 border-none rounded-xl p-3">
             </label>
-            <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">照片網址</span>
-              <input v-model="form.photoUrl" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
-            </label>
+            <label class="block"><span class="text-[10px] text-gray-500 uppercase">照片網址</span><input v-model="form.photoUrl" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"></label>
+            <label class="block mt-4"><span class="text-[10px] text-gray-500 uppercase">備註</span><textarea v-model="form.remark" rows="2" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-sm text-white"></textarea></label>
           </div>
           <div class="space-y-5">
             <div class="grid grid-cols-2 gap-2">
-              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">購買人</span>
-                <select v-model="form.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="p in options.purchasers" :value="p">{{p}}</option></select>
-              </label>
-              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">選手</span>
-                <select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="pl in options.players" :value="pl">{{pl}}</option></select>
-              </label>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase">購買人</span><select v-model="form.purchaser" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="p in options.purchasers" :value="p">{{p}}</option></select></label>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase">選手</span><select v-model="form.player" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"><option v-for="pl in options.players" :value="pl">{{pl}}</option></select></label>
             </div>
             <div class="grid grid-cols-3 gap-2">
-              <label class="block"><span class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">件數</span>
-                <input type="number" min="1" v-model="form.quantity" class="w-full bg-blue-900/20 text-blue-300 border border-blue-900/50 rounded-xl p-3 mt-1 text-center font-bold">
-              </label>
-              <label class="block col-span-2"><span class="text-[10px] text-gray-500 uppercase tracking-widest">韓元單價</span>
-                <input type="number" v-model="form.krwPrice" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
-              </label>
+              <label class="block"><span class="text-[10px] text-blue-400 font-bold uppercase">件數</span><input type="number" min="1" v-model="form.quantity" class="w-full bg-blue-900/20 text-blue-300 border border-blue-900/50 rounded-xl p-3 mt-1 text-center font-bold"></label>
+              <label class="block col-span-2"><span class="text-[10px] text-gray-500 uppercase">韓元單價</span><input type="number" v-model="form.krwPrice" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"></label>
             </div>
             <div class="grid grid-cols-2 gap-2">
-              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">匯率</span>
-                <input type="number" step="0.00001" v-model="form.exchangeRate" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1">
-              </label>
-              <label class="block"><span class="text-[10px] text-gray-500 uppercase tracking-widest">總手續費(TWD)</span>
-                <div class="w-full bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl p-3 mt-1 cursor-not-allowed">
-                  NT$ {{ Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015).toLocaleString() }}
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase">匯率</span><input type="number" step="0.00001" v-model="form.exchangeRate" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"></label>
+              <label class="block"><span class="text-[10px] text-gray-500 uppercase">總手續費(TWD)</span>
+                <div class="w-full bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl p-3 mt-1">
+                  NT$ {{ form.isProxy ? 0 : Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015).toLocaleString() }}
                 </div>
               </label>
             </div>
+
+            <div class="flex flex-col gap-3 pt-2">
+              <label class="flex items-center space-x-3 cursor-pointer p-3 bg-gray-800 rounded-xl border border-gray-700 hover:border-yellow-600 transition">
+                <input type="checkbox" v-model="form.isProxy" class="w-5 h-5 rounded border-gray-600 text-yellow-500 focus:ring-0 cursor-pointer">
+                <span class="text-sm font-bold text-yellow-500">免手續費 (標記為代購/代領)</span>
+              </label>
+              <label class="flex items-center space-x-3 cursor-pointer p-3 bg-gray-800 rounded-xl border border-gray-700 hover:border-green-600 transition">
+                <input type="checkbox" v-model="form.isPaid" class="w-5 h-5 rounded border-gray-600 text-green-500 focus:ring-0 cursor-pointer">
+                <span class="text-sm font-bold">標記為已付費</span>
+              </label>
+            </div>
+            
             <div class="p-4 bg-red-900/10 rounded-2xl border border-red-900/20">
               <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">預估總額 (單價 * 件數 * 匯率 + 手續費)</p>
-              <p class="text-3xl font-black">NT$ {{ Math.round((form.krwPrice * form.quantity * form.exchangeRate) + Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015)).toLocaleString() }}</p>
+              <p class="text-3xl font-black">NT$ {{ Math.round((form.krwPrice * form.quantity * form.exchangeRate) + (form.isProxy ? 0 : Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015))).toLocaleString() }}</p>
             </div>
-            <label class="flex items-center space-x-3 cursor-pointer pt-2">
-              <input type="checkbox" v-model="form.isPaid" class="w-6 h-6 rounded-lg bg-gray-800 text-red-600 border border-gray-700">
-              <span class="text-sm font-bold">標記為已付費</span>
-            </label>
-            <label class="block mt-4">
-              <span class="text-[10px] text-gray-500 uppercase tracking-widest">備註</span>
-              <textarea v-model="form.remark" rows="2" placeholder="可輸入衣服尺寸、注意事項..." class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1 text-sm text-white placeholder-gray-600"></textarea>
-            </label>
           </div>
         </div>
         <div class="mt-8 flex gap-3">
           <button @click="saveItem" class="flex-1 bg-red-600 p-4 rounded-xl font-bold hover:bg-red-700 text-white">儲存</button>
-          <button @click="showModal = false" class="px-8 py-4 bg-gray-800 rounded-xl font-bold text-gray-300 hover:text-white">取消</button>
+          <button @click="showModal = false" class="px-8 py-4 bg-gray-800 rounded-xl font-bold text-gray-300">取消</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ❗ 請替換為重新部署後的 GAS 網址 ❗
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCXDjUQQFcqsHcYyLyFeVjbvJ1X2PALmUeRUFt_cPGzBq3kwtGQjjm_K60y3gzEREWVw/exec'; 
 
     const { createApp, ref, computed, onMounted } = Vue;
@@ -333,7 +295,7 @@
       setup() {
         const events = ref([]);
         const currentEvent = ref('');
-        const thresholds = ref({}); // 💡 儲存各個月份門檻對照表
+        const thresholds = ref({}); 
 
         const list = ref([]);
         const templateData = ref([]); 
@@ -347,70 +309,64 @@
         const selectedIds = ref([]);
         const isAllSelected = computed(() => filteredList.value.length > 0 && selectedIds.value.length === filteredList.value.length);
         
-        const filters = ref({ date: '', purchaser: '', player: '' });
-        const options = {
-          dates: ['第一波', '第二波', '8/13', '轉蛋'],
-          purchasers: ['Nio', '慕斯'],
+        // 💡 變成響應式的變數，等資料抓回來後動態替換
+        const options = ref({
+          dates: [],
+          purchasers: [],
           players: ['無', 'Doran', 'Oner', 'Faker', 'Peyz', 'Keria']
-        };
+        });
         
         const batchForm = ref({ date: '', purchaser: '' });
-        const batchEditForm = ref({ 
-          date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: ''
-        });
+        const batchEditForm = ref({ date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '', isProxy: '' });
 
         const form = ref({
-          id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '',
-          purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0,
-          remark: ''
+          id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: ''
         });
 
         const isLoading = ref(false);
-        const fetchError = ref('');
-        const giftThreshold = ref(1000); // 滿額禮當前門檻數值
+        const giftThreshold = ref(50000); 
+        const secondPayment = ref(0); 
 
         const fetchData = async () => {
           isLoading.value = true;
-          fetchError.value = ''; 
           try {
             const url = currentEvent.value ? `${GAS_URL}?event=${encodeURIComponent(currentEvent.value)}` : GAS_URL;
             const res = await fetch(url);
-            const text = await res.text(); 
-            
-            let data;
-            try { data = JSON.parse(text); } catch (err) { throw new Error("Google 阻擋了讀取！"); }
+            const data = JSON.parse(await res.text()); 
 
             events.value = data.events || [];
             if (data.currentEvent) currentEvent.value = data.currentEvent;
 
-            // 💡 讀取並動態更新目前月份的滿額禮預設金額
+            // 💡 讀取並動態更新目前月份的：門檻、二補、購買日、購買人
             thresholds.value = data.thresholds || {};
-            if (thresholds.value[currentEvent.value] !== undefined) {
-              giftThreshold.value = thresholds.value[currentEvent.value];
+            if (thresholds.value[currentEvent.value]) {
+              const currentSettings = thresholds.value[currentEvent.value];
+              giftThreshold.value = currentSettings.threshold;
+              secondPayment.value = currentSettings.secondPayment;
+              options.value.dates = currentSettings.dates || [];
+              options.value.purchasers = currentSettings.purchasers || [];
             } else {
-              giftThreshold.value = 1000; 
+              giftThreshold.value = 50000; 
+              secondPayment.value = 0;
+              options.value.dates = [];
+              options.value.purchasers = [];
             }
 
             list.value = data.records || [];
             templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
             selectedIds.value = []; 
           } catch (e) {
-            fetchError.value = e.message || "發生跨域錯誤 (CORS)";
+             console.error(e);
           } finally {
             isLoading.value = false; 
           }
         };
 
         const filteredList = computed(() => {
-          let result = list.value.filter(i => 
-            (!filters.value.date || i.購買日 == filters.value.date) &&
-            (!filters.value.purchaser || i.購買人 == filters.value.purchaser) &&
-            (!filters.value.player || i.選手 == filters.value.player)
-          );
+          let result = list.value.filter(i => (!filters.value.date || i.購買日 == filters.value.date) && (!filters.value.purchaser || i.購買人 == filters.value.purchaser) && (!filters.value.player || i.選手 == filters.value.player));
           if (sortByItemAndPlayer.value) {
             result.sort((a, b) => {
-              const nameA = a.商品名稱 || '';
-              const nameB = b.商品名稱 || '';
+              const nameA = a.商品名稱 || ''; const nameB = b.商品名稱 || '';
               if (nameA !== nameB) return nameA.localeCompare(nameB, 'zh-TW');
               return (a.選手 || '').localeCompare((b.選手 || ''), 'zh-TW');
             });
@@ -423,21 +379,16 @@
           const rate = Number(item.韓元匯率) || 0;
           const qty = Number(item.件數) || 1;
           const baseTwd = krw * rate * qty;
-          return Math.round(baseTwd + Math.round(baseTwd * 0.015));
+          const isProxy = item.代購 === true || item.代購 === 'TRUE';
+          return Math.round(baseTwd + (isProxy ? 0 : Math.round(baseTwd * 0.015)));
         };
 
         const filteredTotalNum = computed(() => filteredList.value.reduce((s, i) => s + getItemTwd(i), 0));
-        
-        // 👇 新增：計算當前篩選下的「韓元純數字總額」
         const filteredKrwTotalNum = computed(() => filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0));
-        
-        // 將韓元總額加上千分位逗號供畫面顯示
         const filteredKrwTotal = computed(() => Math.round(filteredKrwTotalNum.value).toLocaleString());
-        
         const filteredTotal = computed(() => filteredTotalNum.value.toLocaleString());
         const pendingTotal = computed(() => Math.round(filteredList.value.reduce((s, i) => (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0)).toLocaleString());
 
-        // 💡 改用「韓元純數字總額 (filteredKrwTotalNum)」來計算滿額小卡張數
         const photoCardCount = computed(() => {
           if (!giftThreshold.value || giftThreshold.value <= 0) return 0;
           return Math.floor(filteredKrwTotalNum.value / giftThreshold.value);
@@ -452,40 +403,43 @@
             form.value = { 
               id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, quantity: Number(item.件數) || 1, photoUrl: item.照片 || '',
               purchaser: item.購買人, player: item.選手, isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
+              isProxy: item.代購 == 'TRUE' || item.代購 === true,
               krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費), remark: item.備註 || ''
             };
           } else {
-            form.value = { id: null, date: '4/24', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: 'Nio', player: '無', isPaid: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' };
+            form.value = { id: null, date: options.value.dates[0] || '', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: options.value.purchasers[0] || '', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' };
           }
           showModal.value = true;
         };
 
-        const openTemplateModal = () => {
-          templateData.value.forEach(t => t.selected = false);
-          batchForm.value = { date: '', purchaser: '' };
-          showTemplateModal.value = true;
-        };
+        const openTemplateModal = () => { templateData.value.forEach(t => t.selected = false); batchForm.value = { date: '', purchaser: '' }; showTemplateModal.value = true; };
 
         const sendPostRequest = async (payload) => {
           isLoading.value = true;
           payload.eventName = currentEvent.value;
-          try {
-            await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-          } catch (error) {}
+          try { await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (error) {}
           setTimeout(() => fetchData(), 1500); 
         };
 
         const saveItem = async () => {
-          form.value.fee = Math.round(form.value.krwPrice * form.value.quantity * form.value.exchangeRate * 0.015);
           await sendPostRequest({ ...form.value, action: modalAction.value });
           showModal.value = false;
         };
 
+        const saveSecondPayment = async () => {
+          isLoading.value = true;
+          try { await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'updateSecondPayment', eventName: currentEvent.value, secondPayment: secondPayment.value }) }); } catch (error) {}
+          setTimeout(() => fetchData(), 1500); 
+        };
+
         const deleteItem = async (id) => {
           if(!confirm('確定要刪除這筆紀錄嗎？')) return;
-          isLoading.value = true;
-          try { await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ id, action: 'delete', eventName: currentEvent.value }) }); } catch (error) {}
-          setTimeout(() => fetchData(), 1500); 
+          await sendPostRequest({ action: 'delete', id: id });
+        };
+        const submitBatchDelete = async () => {
+          if (!confirm(`確定要一口氣刪除選取的 ${selectedIds.value.length} 筆嗎？`)) return;
+          await sendPostRequest({ action: 'batchDelete', ids: selectedIds.value });
+          selectedIds.value = [];
         };
 
         const submitBatchAdd = async () => {
@@ -495,31 +449,20 @@
         };
 
         const submitBatchEdit = async () => {
-          await sendPostRequest({ action: 'batchUpdate', ids: selectedIds.value, date: batchEditForm.value.date, purchaser: batchEditForm.value.purchaser, exchangeRate: batchEditForm.value.exchangeRate, fee: batchEditForm.value.fee, krwPrice: batchEditForm.value.krwPrice, isPaid: batchEditForm.value.isPaid });
+          await sendPostRequest({ action: 'batchUpdate', ids: selectedIds.value, date: batchEditForm.value.date, purchaser: batchEditForm.value.purchaser, exchangeRate: batchEditForm.value.exchangeRate, fee: batchEditForm.value.fee, krwPrice: batchEditForm.value.krwPrice, isPaid: batchEditForm.value.isPaid, isProxy: batchEditForm.value.isProxy });
           showBatchEditModal.value = false;
-          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '' };
+          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '', isProxy: '' };
           selectedIds.value = [];
-        };
-
-        const submitBatchDelete = async () => {
-          if (!confirm(`確定要一口氣刪除選取的 ${selectedIds.value.length} 筆紀錄嗎？\n(⚠️ 此動作無法復原)`)) return;
-          
-          await sendPostRequest({ 
-            action: 'batchDelete', 
-            ids: selectedIds.value 
-          });
-          
-          selectedIds.value = []; // 刪除完清空勾選狀態
         };
 
         onMounted(fetchData);
 
         return { 
-          events, currentEvent, thresholds, giftThreshold, photoCardCount,
-          isLoading, fetchError, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
-          showModal, modalAction, form, openModal, saveItem, deleteItem,
+          events, currentEvent, thresholds, giftThreshold, photoCardCount, secondPayment, saveSecondPayment,
+          isLoading, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
+          showModal, modalAction, form, openModal, saveItem, deleteItem, submitBatchDelete,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, submitBatchDelete, getItemTwd, fetchData
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd, fetchData
         };
       }
     }).mount('#app');
