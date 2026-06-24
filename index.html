@@ -308,6 +308,8 @@
         
         const selectedIds = ref([]);
         const isAllSelected = computed(() => filteredList.value.length > 0 && selectedIds.value.length === filteredList.value.length);
+
+        const filters = ref({ date: '', purchaser: '', player: '' });
         
         // 💡 變成響應式的變數，等資料抓回來後動態替換
         const options = ref({
