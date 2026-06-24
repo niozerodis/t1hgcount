@@ -23,7 +23,7 @@
         <div class="flex items-center gap-3">
           <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-widest text-white">T1 Shopping</h1>
           <div class="relative group flex items-center">
-            <select v-model="currentEvent" @change="fetchData" 
+            <select v-model="currentEvent" @change="changeMonth" 
                     class="appearance-none bg-gradient-to-b from-gray-800 to-gray-900 text-red-400 font-bold text-base md:text-lg px-3 py-1 pr-9 rounded-lg border border-gray-700 shadow-md hover:border-red-500/50 hover:shadow-[0_0_10px_rgba(220,38,38,0.2)] focus:ring-2 focus:ring-red-600/50 focus:border-red-500 focus:outline-none cursor-pointer transition-all duration-300 tracking-wide">
               <option v-for="ev in events" :key="ev" :value="ev" class="bg-gray-900 text-gray-200">{{ ev }}</option>
             </select>
@@ -362,6 +362,14 @@
         const isLoading = ref(false);
         const giftThreshold = ref(50000); 
 
+        // 💡 只有在手動切換月份時，才清空篩選條件並重新抓資料
+        const changeMonth = () => {
+          filters.value.date = '';
+          filters.value.purchaser = '';
+          filters.value.player = '';
+          fetchData();
+        };
+
         const fetchData = async () => {
           isLoading.value = true;
           try {
@@ -371,11 +379,6 @@
 
             events.value = data.events || [];
             if (data.currentEvent) currentEvent.value = data.currentEvent;
-
-            // 💡 每次載入或切換月份時，強制重置下拉選單
-            filters.value.date = '';
-            filters.value.purchaser = '';
-            filters.value.player = '';
 
             thresholds.value = data.thresholds || {};
             if (thresholds.value[currentEvent.value]) {
@@ -502,7 +505,7 @@
           isLoading, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem, submitBatchDelete,
           templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd, fetchData
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd, fetchData, changeMonth
         };
       }
     }).mount('#app');
