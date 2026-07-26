@@ -435,11 +435,56 @@
           return Math.round(baseTwd + (isProxy ? 0 : Math.round(baseTwd * 0.015)));
         };
 
-        const filteredTotalNum = computed(() => filteredList.value.reduce((s, i) => s + getItemTwd(i), 0));
+        // 💡 新增：計算目前篩選條件下的「二補費用」總和
+        const activeSecondPayment = computed(() => {
+          let extra = 0;
+          // 取得購買人總數（用來平分公積金），若無資料則預設為 1 避免除以零
+          const purchaserCount = options.value.purchasers.length || 1; 
+          
+          // 1. 先過濾出符合「當前購買日篩選」的二補紀錄 (若無選擇日期，則計算該月所有二補)
+          const relevantSp = secondPayments.value.filter(sp => {
+            return !filters.value.date || sp['購買日'] === filters.value.date;
+          });
+
+          // 2. 根據「購買人篩選」條件來計算應加總的金額
+          if (filters.value.purchaser) {
+            // 👉 情況 A：有指定單一購買人
+            relevantSp.forEach(sp => {
+              if (sp['購買人'] === filters.value.purchaser) {
+                // 加上該購買人的「專屬二補」
+                extra += (Number(sp['二補費用(TWD)']) || 0);
+              } else if (sp['購買人'] === '所有') {
+                // 加上「所有 (公積金)」除以總人數的份額
+                extra += (Number(sp['二補費用(TWD)']) || 0) / purchaserCount;
+              }
+            });
+          } else {
+            // 👉 情況 B：看「所有購買人」
+            relevantSp.forEach(sp => {
+              // 直接加總該日期下的「所有 (公積金)」與「各個人的專屬二補」
+              extra += (Number(sp['二補費用(TWD)']) || 0);
+            });
+          }
+          return extra;
+        });
+
+        // 💡 修改：將商品總額加上算出來的二補費用
+        const filteredTotalNum = computed(() => {
+          const itemsTotal = filteredList.value.reduce((s, i) => s + getItemTwd(i), 0);
+          return itemsTotal + activeSecondPayment.value;
+        });
+
         const filteredKrwTotalNum = computed(() => filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0));
         const filteredKrwTotal = computed(() => Math.round(filteredKrwTotalNum.value).toLocaleString());
-        const filteredTotal = computed(() => filteredTotalNum.value.toLocaleString());
-        const pendingTotal = computed(() => Math.round(filteredList.value.reduce((s, i) => (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0)).toLocaleString());
+        
+        // 加上 Math.round 確保平分後產生的小數點能四捨五入
+        const filteredTotal = computed(() => Math.round(filteredTotalNum.value).toLocaleString());
+        
+        // 💡 修改：剩餘待付金額也同步加上二補費用 (預設二補皆為未付款)
+        const pendingTotal = computed(() => {
+          const itemsPending = filteredList.value.reduce((s, i) => (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0);
+          return Math.round(itemsPending + activeSecondPayment.value).toLocaleString();
+        });
         const photoCardCount = computed(() => (!giftThreshold.value || giftThreshold.value <= 0) ? 0 : Math.floor(filteredKrwTotalNum.value / giftThreshold.value));
         const selectedTemplateCount = computed(() => templateData.value.filter(t => t.selected).length);
         const toggleAll = (e) => selectedIds.value = e.target.checked ? filteredList.value.map(i => i.ID) : [];
