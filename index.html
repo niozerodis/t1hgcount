@@ -147,7 +147,7 @@
       </div>
     </div>
 
-    <!-- 💰 升級版：獨立二補費用紀錄彈窗 -->
+    <!-- 💰 升級防呆版：獨立二補費用紀錄彈窗 -->
     <div v-if="showSpModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
       <div class="bg-gray-900 border border-purple-800/50 rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl flex flex-col max-h-[90vh]">
         <h2 class="text-xl font-bold mb-2 text-purple-400 shrink-0">💰 二補費用紀錄</h2>
@@ -163,7 +163,6 @@
 
         <div v-if="spForm.date" class="overflow-y-auto no-scrollbar pr-2 flex-1 pb-4 flex flex-col gap-5">
           
-          <!-- 💡 共同資訊區塊 -->
           <div class="bg-gray-800/60 p-4 rounded-xl border border-gray-700 space-y-4">
             <p class="text-xs text-purple-400 font-bold mb-1 flex items-center gap-1">📌 該日共同資訊</p>
             <div class="grid grid-cols-2 gap-3 items-center">
@@ -186,7 +185,6 @@
             </div>
           </div>
 
-          <!-- 💡 費用分配區塊 -->
           <div>
             <p class="text-xs text-gray-400 mb-2 sticky top-0 bg-gray-900/95 py-1 z-10 backdrop-blur-md">2. 分配二補費用 (NT$)</p>
             <div class="space-y-2">
@@ -372,7 +370,6 @@
         const batchForm = ref({ date: '', purchaser: '' });
         const batchEditForm = ref({ date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '', isProxy: '' });
         
-        // 💡 升級 spForm：加入 common 區塊存放該日期的共用資訊
         const spForm = ref({ date: '', common: { type: '代購', store: '', remark: '' }, amounts: {} }); 
 
         const form = ref({ id: null, date: '', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: '', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' });
@@ -463,14 +460,12 @@
 
         const openTemplateModal = () => { templateData.value.forEach(t => t.selected = false); batchForm.value = { date: '', purchaser: '' }; showTemplateModal.value = true; };
 
-        // 💡 載入二補表單
         const openSpModal = () => {
           spForm.value.date = options.value.dates[0] || '';
           loadSpForDate();
           showSpModal.value = true;
         };
 
-        // 💡 當選擇購買日時，載入該日的共用資訊及費用
         const loadSpForDate = () => {
           spForm.value.common = { type: '代購', store: '', remark: '' };
           spForm.value.amounts = { '所有': 0 };
@@ -514,7 +509,7 @@
           selectedIds.value = [];
         };
 
-        // 💡 儲存共用資訊+分配費用
+        // 💡 升級：存檔時加入「樂觀更新」，防止使用者按太快導致資料消失
         const saveSpRecords = async () => {
           const recordsToSave = [];
           for (const [purchaser, amount] of Object.entries(spForm.value.amounts)) { 
@@ -525,6 +520,20 @@
                 store: spForm.value.common.store,
                 remark: spForm.value.common.remark
             }); 
+            
+            // 寫入前端暫存 (樂觀更新)
+            let existingIdx = secondPayments.value.findIndex(sp => sp['場次/月份'] === currentEvent.value && sp['購買日'] === spForm.value.date && sp['購買人'] === purchaser);
+            if (existingIdx !== -1) {
+              secondPayments.value[existingIdx]['二補費用(TWD)'] = amount;
+              secondPayments.value[existingIdx]['類型'] = spForm.value.common.type;
+              secondPayments.value[existingIdx]['商家名稱'] = spForm.value.common.store;
+              secondPayments.value[existingIdx]['備註'] = spForm.value.common.remark;
+            } else {
+              secondPayments.value.push({
+                '場次/月份': currentEvent.value, '購買日': spForm.value.date, '購買人': purchaser,
+                '二補費用(TWD)': amount, '類型': spForm.value.common.type, '商家名稱': spForm.value.common.store, '備註': spForm.value.common.remark
+              });
+            }
           }
           await sendPostRequest({ action: 'saveSecondPayments', date: spForm.value.date, records: recordsToSave });
           showSpModal.value = false;
