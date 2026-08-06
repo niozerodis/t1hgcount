@@ -341,7 +341,7 @@
   </div>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCXDjUQQFcqsHcYyLyFeVjbvJ1X2PALmUeRUFt_cPGzBq3kwtGQjjm_K60y3gzEREWVw/exec'; 
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzx6fx8MS6ycQXavWrxvRM8YKnkXwosc7Cl0Fq8DL_RzoGoyb0Be8fJuVknxygoGJ3gMQ/exec'; 
 
     const { createApp, ref, computed, onMounted } = Vue;
     createApp({
@@ -544,24 +544,22 @@
         const sendPostRequest = async (payload) => {
           isLoading.value = true;
           payload.eventName = currentEvent.value;
-          try {
-            // ⚠️ 拿掉 no-cors，才能真的知道成功或失敗
-            const res = await fetch(GAS_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(payload)
-            });
-            const text = await res.text();
-            if (text.trim().startsWith('<')) throw new Error('後端回傳錯誤頁，請檢查部署設定');
-        
-            const data = JSON.parse(text);
-            if (data.status !== 'success') throw new Error(data.message || '未知錯誤');
-        
-            await fetchData();   // 確認寫入成功後才重新讀取，取代原本的 setTimeout 1500
-          } catch (err) {
-            isLoading.value = false;
-            alert('儲存失敗：' + err.message + '\n資料可能未寫入，請重新整理確認。');
+          try { 
+            await fetch(GAS_URL, { 
+              method: 'POST', 
+              mode: 'no-cors', 
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+              body: JSON.stringify(payload) 
+            }); 
+          } catch (error) {
+            console.error("POST 請求發送失敗", error);
           }
+          
+          // 取消上一次還沒執行的重新整理，避免連續觸發
+          if (fetchTimer) clearTimeout(fetchTimer);
+          
+          // 延長至 2 秒後再重新拉取資料，給 Google 緩衝寫入的時間
+          fetchTimer = setTimeout(() => fetchData(), 2000); 
         };
         const saveItem = async () => { await sendPostRequest({ ...form.value, action: modalAction.value }); showModal.value = false; };
         const deleteItem = async (id) => { if(!confirm('確定要刪除這筆紀錄嗎？')) return; await sendPostRequest({ action: 'delete', id: id }); };
