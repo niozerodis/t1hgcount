@@ -387,33 +387,39 @@
         const fetchData = async () => {
           isLoading.value = true;
           try {
-            const url = currentEvent.value ? `${GAS_URL}?event=${encodeURIComponent(currentEvent.value)}` : GAS_URL;
+            const url = currentEvent.value
+              ? `${GAS_URL}?event=${encodeURIComponent(currentEvent.value)}`
+              : GAS_URL;
             const res = await fetch(url);
-            const data = JSON.parse(await res.text()); 
-
+        
+            if (!res.ok) throw new Error(`HTTP ${res.status}｜後端網址可能失效，請重新部署`);
+        
+            const text = await res.text();
+            if (text.trim().startsWith('<')) {
+              throw new Error('後端回傳 HTML 而非 JSON：部署權限未設為「任何人」，或腳本執行逾時');
+            }
+        
+            const data = JSON.parse(text);
+            if (data.status === 'error') throw new Error(data.message);
+        
             events.value = data.events || [];
             if (data.currentEvent) currentEvent.value = data.currentEvent;
-
+        
             thresholds.value = data.thresholds || {};
-            if (thresholds.value[currentEvent.value]) {
-              const currentSettings = thresholds.value[currentEvent.value];
-              giftThreshold.value = currentSettings.threshold;
-              options.value.dates = currentSettings.dates || [];
-              options.value.purchasers = currentSettings.purchasers || [];
-            } else {
-              giftThreshold.value = 50000; 
-              options.value.dates = [];
-              options.value.purchasers = [];
-            }
-
+            const cur = thresholds.value[currentEvent.value];
+            giftThreshold.value = cur ? cur.threshold : 50000;
+            options.value.dates = cur ? (cur.dates || []) : [];
+            options.value.purchasers = cur ? (cur.purchasers || []) : [];
+        
             secondPayments.value = data.secondPayments || [];
             list.value = data.records || [];
             templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
-            selectedIds.value = []; 
+            selectedIds.value = [];
           } catch (e) {
-             console.error(e);
+            console.error(e);
+            alert('讀取失敗：' + e.message);
           } finally {
-            isLoading.value = false; 
+            isLoading.value = false;
           }
         };
 
@@ -535,10 +541,25 @@
         const sendPostRequest = async (payload) => {
           isLoading.value = true;
           payload.eventName = currentEvent.value;
-          try { await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (error) {}
-          setTimeout(() => fetchData(), 1500); 
+          try {
+            // ⚠️ 拿掉 no-cors，才能真的知道成功或失敗
+            const res = await fetch(GAS_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload)
+            });
+            const text = await res.text();
+            if (text.trim().startsWith('<')) throw new Error('後端回傳錯誤頁，請檢查部署設定');
+        
+            const data = JSON.parse(text);
+            if (data.status !== 'success') throw new Error(data.message || '未知錯誤');
+        
+            await fetchData();   // 確認寫入成功後才重新讀取，取代原本的 setTimeout 1500
+          } catch (err) {
+            isLoading.value = false;
+            alert('儲存失敗：' + err.message + '\n資料可能未寫入，請重新整理確認。');
+          }
         };
-
         const saveItem = async () => { await sendPostRequest({ ...form.value, action: modalAction.value }); showModal.value = false; };
         const deleteItem = async (id) => { if(!confirm('確定要刪除這筆紀錄嗎？')) return; await sendPostRequest({ action: 'delete', id: id }); };
         const submitBatchDelete = async () => { if (!confirm(`確定要一口氣刪除選取的 ${selectedIds.value.length} 筆嗎？`)) return; await sendPostRequest({ action: 'batchDelete', ids: selectedIds.value }); selectedIds.value = []; };
