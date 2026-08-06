@@ -376,6 +376,7 @@
 
         const isLoading = ref(false);
         const giftThreshold = ref(50000); 
+        let fetchTimer = null;
 
         const changeMonth = () => {
           filters.value.date = '';
@@ -512,7 +513,33 @@
           showModal.value = true;
         };
 
-        const openTemplateModal = () => { templateData.value.forEach(t => t.selected = false); batchForm.value = { date: '', purchaser: '' }; showTemplateModal.value = true; };
+        const openTemplateModal = async () => {
+          // 打開前先顯示載入中動畫
+          isLoading.value = true;
+          try {
+            // 加上 mode=templates 專門向後端呼叫套版資料，並加上時間戳記防止快取
+            const url = `${GAS_URL}?event=${encodeURIComponent(currentEvent.value)}&mode=templates&t=${new Date().getTime()}`;
+            const res = await fetch(url);
+            const text = await res.text();
+            const data = JSON.parse(text);
+        
+            if (data.status === 'success') {
+              // 成功抓到後，更新到前端畫面上
+              templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
+            } else {
+              console.error("後端錯誤：", data.message);
+            }
+          } catch (e) {
+            console.error("讀取套版失敗", e);
+            alert("無法讀取套版資料，請檢查網路連線");
+          } finally {
+            isLoading.value = false;
+          }
+        
+          // 重置表單並打開彈窗
+          batchForm.value = { date: '', purchaser: '' };
+          showTemplateModal.value = true;
+        };
 
         const openSpModal = () => {
           spForm.value.date = options.value.dates[0] || '';
