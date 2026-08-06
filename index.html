@@ -15,15 +15,15 @@
   <div id="app" class="max-w-7xl mx-auto">
     <div v-if="isLoading" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity">
       <div class="w-16 h-16 border-4 border-gray-700 border-t-red-600 rounded-full animate-spin mb-6 shadow-[0_0_15px_rgba(220,38,38,0.5)]"></div>
-      <p class="text-white font-bold tracking-widest animate-pulse text-lg">資料同步中，請稍候...</p>
+      <p class="text-white font-bold tracking-widest animate-pulse text-lg">{{ loadingText }}</p>
     </div>
-    
+
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-l-4 border-red-600 pl-4 gap-4">
       <div>
         <div class="flex items-center gap-3">
           <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-widest text-white">T1 Shopping</h1>
           <div class="relative group flex items-center">
-            <select v-model="currentEvent" @change="changeMonth" 
+            <select v-model="currentEvent" @change="changeMonth"
                     class="appearance-none bg-gradient-to-b from-gray-800 to-gray-900 text-red-400 font-bold text-base md:text-lg px-3 py-1 pr-9 rounded-lg border border-gray-700 shadow-md hover:border-red-500/50 hover:shadow-[0_0_10px_rgba(220,38,38,0.2)] focus:ring-2 focus:ring-red-600/50 focus:border-red-500 focus:outline-none cursor-pointer transition-all duration-300 tracking-wide">
               <option v-for="ev in events" :key="ev" :value="ev" class="bg-gray-900 text-gray-200">{{ ev }}</option>
             </select>
@@ -44,7 +44,7 @@
           ✏️ 批次編輯 ({{ selectedIds.length }})
         </button>
         <button @click="openTemplateModal" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-lg text-sm">
-          ⚡ 快速輸入商品 
+          ⚡ 快速輸入商品
         </button>
       </div>
     </header>
@@ -56,13 +56,13 @@
       </div>
       <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">目前篩選總金額</p>
-        <p class="text-3xl font-black text-white">NT$ {{ filteredTotal.toLocaleString() }}</p>
+        <p class="text-3xl font-black text-white">NT$ {{ filteredTotal }}</p>
       </div>
       <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
         <p class="text-[10px] text-gray-500 mb-1 uppercase tracking-[0.2em]">剩餘待付金額</p>
-        <p class="text-3xl font-black text-red-500">NT$ {{ pendingTotal.toLocaleString() }}</p>
+        <p class="text-3xl font-black text-red-500">NT$ {{ pendingTotal }}</p>
       </div>
-      
+
       <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden flex flex-col justify-between">
         <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
           <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] shrink-0">篩選滿額禮</p>
@@ -147,7 +147,7 @@
       </div>
     </div>
 
-    <!-- 💰 升級防呆版：獨立二補費用紀錄彈窗 -->
+    <!-- 💰 二補費用紀錄彈窗 -->
     <div v-if="showSpModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
       <div class="bg-gray-900 border border-purple-800/50 rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl flex flex-col max-h-[90vh]">
         <h2 class="text-xl font-bold mb-2 text-purple-400 shrink-0">💰 二補費用紀錄</h2>
@@ -162,7 +162,7 @@
         </label>
 
         <div v-if="spForm.date" class="overflow-y-auto no-scrollbar pr-2 flex-1 pb-4 flex flex-col gap-5">
-          
+
           <div class="bg-gray-800/60 p-4 rounded-xl border border-gray-700 space-y-4">
             <p class="text-xs text-purple-400 font-bold mb-1 flex items-center gap-1">📌 該日共同資訊</p>
             <div class="grid grid-cols-2 gap-3 items-center">
@@ -252,11 +252,12 @@
         </div>
         <div class="p-6 overflow-y-auto no-scrollbar flex-1">
           <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-            <div v-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">資料表中尚未建立套版資料！</div>
+            <div v-if="templateLoading" class="col-span-full text-center text-gray-500 py-10">套版資料載入中...</div>
+            <div v-else-if="templateData.length === 0" class="col-span-full text-center text-gray-500 py-10">資料表中尚未建立套版資料！</div>
             <div v-for="(tpl, idx) in templateData" :key="idx" @click="tpl.selected = !tpl.selected" :class="tpl.selected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-800 bg-gray-800/50'" class="relative rounded-2xl border-2 transition-all duration-200 overflow-hidden cursor-pointer">
               <div v-if="tpl.selected" class="absolute top-2 right-2 z-10 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg">✓</div>
               <div class="h-32 bg-black relative">
-                <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-70">
+                <img v-if="tpl.照片" :src="tpl.照片" class="w-full h-full object-cover opacity-70" loading="lazy">
                 <div v-else class="w-full h-full flex items-center justify-center text-gray-600 text-sm">無圖</div>
                 <div class="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] rounded">{{ tpl.選手 || '無' }}</div>
               </div>
@@ -310,7 +311,7 @@
               <label class="block"><span class="text-[10px] text-gray-500 uppercase">匯率</span><input type="number" step="0.00001" v-model="form.exchangeRate" class="w-full bg-gray-800 border-none rounded-xl p-3 mt-1"></label>
               <label class="block"><span class="text-[10px] text-gray-500 uppercase">總手續費(TWD)</span>
                 <div class="w-full bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl p-3 mt-1">
-                  NT$ {{ form.isProxy ? 0 : Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015).toLocaleString() }}
+                  NT$ {{ (form.isProxy ? 0 : Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015)).toLocaleString() }}
                 </div>
               </label>
             </div>
@@ -325,7 +326,7 @@
                 <span class="text-sm font-bold">標記為已付費</span>
               </label>
             </div>
-            
+
             <div class="p-4 bg-red-900/10 rounded-2xl border border-red-900/20">
               <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">預估總額 (單價 * 件數 * 匯率 + 手續費)</p>
               <p class="text-3xl font-black">NT$ {{ Math.round((form.krwPrice * form.quantity * form.exchangeRate) + (form.isProxy ? 0 : Math.round(form.krwPrice * form.quantity * form.exchangeRate * 0.015))).toLocaleString() }}</p>
@@ -341,167 +342,235 @@
   </div>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCXDjUQQFcqsHcYyLyFeVjbvJ1X2PALmUeRUFt_cPGzBq3kwtGQjjm_K60y3gzEREWVw/exec'; 
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCXDjUQQFcqsHcYyLyFeVjbvJ1X2PALmUeRUFt_cPGzBq3kwtGQjjm_K60y3gzEREWVw/exec';
 
     const { createApp, ref, computed, onMounted } = Vue;
     createApp({
       setup() {
         const events = ref([]);
         const currentEvent = ref('');
-        const thresholds = ref({}); 
-        const secondPayments = ref([]); 
+        const thresholds = ref({});
+        const secondPayments = ref([]);
 
         const list = ref([]);
-        const templateData = ref([]); 
+        const templateData = ref([]);
+        const templateLoading = ref(false);
         const sortByItemAndPlayer = ref(false);
-        
+
         const showModal = ref(false);
         const showTemplateModal = ref(false);
         const showBatchEditModal = ref(false);
-        const showSpModal = ref(false); 
+        const showSpModal = ref(false);
         const modalAction = ref('add');
-        
+
         const selectedIds = ref([]);
-        const isAllSelected = computed(() => filteredList.value.length > 0 && selectedIds.value.length === filteredList.value.length);
-        
         const filters = ref({ date: '', purchaser: '', player: '' });
         const options = ref({ dates: [], purchasers: [], players: ['無', 'Doran', 'Oner', 'Faker', 'Peyz', 'Keria'] });
-        
+
         const batchForm = ref({ date: '', purchaser: '' });
         const batchEditForm = ref({ date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '', isProxy: '' });
-        
-        const spForm = ref({ date: '', common: { type: '代購', store: '', remark: '' }, amounts: {} }); 
-
+        const spForm = ref({ date: '', common: { type: '代購', store: '', remark: '' }, amounts: {} });
         const form = ref({ id: null, date: '', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: '', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' });
 
         const isLoading = ref(false);
-        const giftThreshold = ref(50000); 
+        const loadingText = ref('資料同步中，請稍候...');
+        const giftThreshold = ref(50000);
 
-        const changeMonth = () => {
-          filters.value.date = '';
-          filters.value.purchaser = '';
-          filters.value.player = '';
-          fetchData();
+        /* ============================================================
+         *  核心：具備自動重試能力的請求函式
+         *  Apps Script 的 /exec 會 302 轉址到 googleusercontent 取內容，
+         *  那張票券偶爾會失效並回傳 HTML 錯誤頁（404）。
+         *  這裡把「可重試的傳輸錯誤」和「後端明確回報的業務錯誤」分開處理。
+         * ============================================================ */
+        const fetchJson = async (url, opts = {}, retries = 3) => {
+          let lastErr;
+          for (let i = 0; i < retries; i++) {
+            try {
+              const sep = url.includes('?') ? '&' : '?';
+              const res = await fetch(url + sep + '_t=' + Date.now(), opts);
+              const text = await res.text();
+
+              if (!res.ok) {
+                const err = new Error('連線異常 (HTTP ' + res.status + ')');
+                err.retryable = true;
+                throw err;
+              }
+              if (text.trim().startsWith('<')) {
+                const err = new Error('後端回傳 HTML 而非 JSON');
+                err.retryable = true;
+                throw err;
+              }
+
+              const data = JSON.parse(text);
+              if (data.status === 'error') throw new Error(data.message);
+              return data;
+            } catch (err) {
+              lastErr = err;
+              if (!err.retryable) throw err;
+              if (i < retries - 1) {
+                loadingText.value = '連線不穩，重試中 (' + (i + 2) + '/' + retries + ')...';
+                await new Promise(r => setTimeout(r, 800 * (i + 1)));
+              }
+            }
+          }
+          throw new Error(lastErr.message + '（已重試 ' + retries + ' 次仍失敗）');
         };
 
+        /* ---------- 讀取 ---------- */
+
+        let fetchInflight = false;
+
         const fetchData = async () => {
+          if (fetchInflight) return;
+          fetchInflight = true;
           isLoading.value = true;
+          loadingText.value = '資料同步中，請稍候...';
           try {
             const url = currentEvent.value
-              ? `${GAS_URL}?event=${encodeURIComponent(currentEvent.value)}`
+              ? GAS_URL + '?event=' + encodeURIComponent(currentEvent.value)
               : GAS_URL;
-            const res = await fetch(url);
-        
-            if (!res.ok) throw new Error(`HTTP ${res.status}｜後端網址可能失效，請重新部署`);
-        
-            const text = await res.text();
-            if (text.trim().startsWith('<')) {
-              throw new Error('後端回傳 HTML 而非 JSON：部署權限未設為「任何人」，或腳本執行逾時');
+            const data = await fetchJson(url);
+
+            if (data.needSetup) {
+              alert('偵測到工作表尚未初始化。\n請到 Google 試算表選單「T1 系統 → 初始化 / 檢查所有工作表」執行一次。');
             }
-        
-            const data = JSON.parse(text);
-            if (data.status === 'error') throw new Error(data.message);
-        
+
             events.value = data.events || [];
             if (data.currentEvent) currentEvent.value = data.currentEvent;
-        
+
             thresholds.value = data.thresholds || {};
             const cur = thresholds.value[currentEvent.value];
             giftThreshold.value = cur ? cur.threshold : 50000;
             options.value.dates = cur ? (cur.dates || []) : [];
             options.value.purchasers = cur ? (cur.purchasers || []) : [];
-        
+
             secondPayments.value = data.secondPayments || [];
             list.value = data.records || [];
-            templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
             selectedIds.value = [];
+            templateData.value = [];   // 套版改為開啟彈窗時才載入
           } catch (e) {
             console.error(e);
             alert('讀取失敗：' + e.message);
           } finally {
+            fetchInflight = false;
             isLoading.value = false;
           }
         };
 
+        const changeMonth = () => {
+          filters.value = { date: '', purchaser: '', player: '' };
+          fetchData();
+        };
+
+        /* ---------- 寫入（含冪等鍵，重試不會重複寫入） ---------- */
+
+        const newReqId = () => (self.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : Date.now() + '-' + Math.random().toString(36).slice(2);
+
+        const sendPostRequest = async (payload) => {
+          isLoading.value = true;
+          loadingText.value = '儲存中，請稍候...';
+          payload.eventName = currentEvent.value;
+          payload.reqId = newReqId();   // 整個重試流程共用同一組 ID
+
+          try {
+            await fetchJson(GAS_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload)
+            });
+            await fetchData();
+            return true;
+          } catch (err) {
+            console.error(err);
+            isLoading.value = false;
+            alert('儲存失敗：' + err.message + '\n請重新整理確認資料是否已寫入。');
+            return false;
+          }
+        };
+
+        /* ---------- 計算 ---------- */
+
         const filteredList = computed(() => {
-          let result = list.value.filter(i => (!filters.value.date || i.購買日 == filters.value.date) && (!filters.value.purchaser || i.購買人 == filters.value.purchaser) && (!filters.value.player || i.選手 == filters.value.player));
+          let result = list.value.filter(i =>
+            (!filters.value.date || i.購買日 == filters.value.date) &&
+            (!filters.value.purchaser || i.購買人 == filters.value.purchaser) &&
+            (!filters.value.player || i.選手 == filters.value.player));
           if (sortByItemAndPlayer.value) {
-            result.sort((a, b) => {
-              const nameA = a.商品名稱 || ''; const nameB = b.商品名稱 || '';
+            result = [...result].sort((a, b) => {
+              const nameA = a.商品名稱 || '', nameB = b.商品名稱 || '';
               if (nameA !== nameB) return nameA.localeCompare(nameB, 'zh-TW');
               return (a.選手 || '').localeCompare((b.選手 || ''), 'zh-TW');
             });
           }
           return result;
         });
-        
+
+        const isAllSelected = computed(() => filteredList.value.length > 0 && selectedIds.value.length === filteredList.value.length);
+
         const getItemTwd = (item) => {
-          const krw = Number(item.韓元價格) || 0; const rate = Number(item.韓元匯率) || 0; const qty = Number(item.件數) || 1;
-          const baseTwd = krw * rate * qty; const isProxy = item.代購 === true || item.代購 === 'TRUE';
+          const krw = Number(item.韓元價格) || 0;
+          const rate = Number(item.韓元匯率) || 0;
+          const qty = Number(item.件數) || 1;
+          const baseTwd = krw * rate * qty;
+          const isProxy = item.代購 === true || item.代購 === 'TRUE';
           return Math.round(baseTwd + (isProxy ? 0 : Math.round(baseTwd * 0.015)));
         };
 
-        // 💡 新增：計算目前篩選條件下的「二補費用」總和
+        // 目前篩選條件下的「二補費用」總和
         const activeSecondPayment = computed(() => {
           let extra = 0;
-          // 取得購買人總數（用來平分公積金），若無資料則預設為 1 避免除以零
-          const purchaserCount = options.value.purchasers.length || 1; 
-          
-          // 1. 先過濾出符合「當前購買日篩選」的二補紀錄 (若無選擇日期，則計算該月所有二補)
-          const relevantSp = secondPayments.value.filter(sp => {
-            return !filters.value.date || sp['購買日'] === filters.value.date;
-          });
+          const purchaserCount = options.value.purchasers.length || 1;
+          const relevantSp = secondPayments.value.filter(sp => !filters.value.date || sp['購買日'] === filters.value.date);
 
-          // 2. 根據「購買人篩選」條件來計算應加總的金額
           if (filters.value.purchaser) {
-            // 👉 情況 A：有指定單一購買人
             relevantSp.forEach(sp => {
               if (sp['購買人'] === filters.value.purchaser) {
-                // 加上該購買人的「專屬二補」
                 extra += (Number(sp['二補費用(TWD)']) || 0);
               } else if (sp['購買人'] === '所有') {
-                // 加上「所有 (公積金)」除以總人數的份額
                 extra += (Number(sp['二補費用(TWD)']) || 0) / purchaserCount;
               }
             });
           } else {
-            // 👉 情況 B：看「所有購買人」
-            relevantSp.forEach(sp => {
-              // 直接加總該日期下的「所有 (公積金)」與「各個人的專屬二補」
-              extra += (Number(sp['二補費用(TWD)']) || 0);
-            });
+            relevantSp.forEach(sp => { extra += (Number(sp['二補費用(TWD)']) || 0); });
           }
           return extra;
         });
 
-        // 💡 修改：將商品總額加上算出來的二補費用
-        const filteredTotalNum = computed(() => {
+        const filteredKrwTotalNum = computed(() =>
+          filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0));
+        const filteredKrwTotal = computed(() => Math.round(filteredKrwTotalNum.value).toLocaleString());
+
+        const filteredTotal = computed(() => {
           const itemsTotal = filteredList.value.reduce((s, i) => s + getItemTwd(i), 0);
-          return itemsTotal + activeSecondPayment.value;
+          return Math.round(itemsTotal + activeSecondPayment.value).toLocaleString();
         });
 
-        const filteredKrwTotalNum = computed(() => filteredList.value.reduce((s, i) => s + ((Number(i.韓元價格) || 0) * (Number(i.件數) || 1)), 0));
-        const filteredKrwTotal = computed(() => Math.round(filteredKrwTotalNum.value).toLocaleString());
-        
-        // 加上 Math.round 確保平分後產生的小數點能四捨五入
-        const filteredTotal = computed(() => Math.round(filteredTotalNum.value).toLocaleString());
-        
-        // 💡 修改：剩餘待付金額也同步加上二補費用 (預設二補皆為未付款)
         const pendingTotal = computed(() => {
-          const itemsPending = filteredList.value.reduce((s, i) => (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0);
+          const itemsPending = filteredList.value.reduce((s, i) =>
+            (i.是否付費 == 'TRUE' || i.是否付費 === true) ? s : s + getItemTwd(i), 0);
           return Math.round(itemsPending + activeSecondPayment.value).toLocaleString();
         });
-        const photoCardCount = computed(() => (!giftThreshold.value || giftThreshold.value <= 0) ? 0 : Math.floor(filteredKrwTotalNum.value / giftThreshold.value));
+
+        const photoCardCount = computed(() =>
+          (!giftThreshold.value || giftThreshold.value <= 0) ? 0 : Math.floor(filteredKrwTotalNum.value / giftThreshold.value));
         const selectedTemplateCount = computed(() => templateData.value.filter(t => t.selected).length);
         const toggleAll = (e) => selectedIds.value = e.target.checked ? filteredList.value.map(i => i.ID) : [];
+
+        /* ---------- 彈窗 ---------- */
 
         const openModal = (action, item = null) => {
           modalAction.value = action;
           if (item) {
-            form.value = { 
-              id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱, quantity: Number(item.件數) || 1, photoUrl: item.照片 || '',
-              purchaser: item.購買人, player: item.選手, isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
-              isProxy: item.代購 == 'TRUE' || item.代購 === true, krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率), fee: Number(item.刷卡手續費), remark: item.備註 || ''
+            form.value = {
+              id: item.ID, date: item.購買日, itemId: item.商品編號, itemName: item.商品名稱,
+              quantity: Number(item.件數) || 1, photoUrl: item.照片 || '',
+              purchaser: item.購買人, player: item.選手,
+              isPaid: item.是否付費 == 'TRUE' || item.是否付費 === true,
+              isProxy: item.代購 == 'TRUE' || item.代購 === true,
+              krwPrice: Number(item.韓元價格), exchangeRate: Number(item.韓元匯率),
+              fee: Number(item.刷卡手續費), remark: item.備註 || ''
             };
           } else {
             form.value = { id: null, date: options.value.dates[0] || '', itemId: '', itemName: '', quantity: 1, photoUrl: '', purchaser: options.value.purchasers[0] || '', player: '無', isPaid: false, isProxy: false, krwPrice: 0, exchangeRate: 0.024, fee: 0, remark: '' };
@@ -509,7 +578,28 @@
           showModal.value = true;
         };
 
-        const openTemplateModal = () => { templateData.value.forEach(t => t.selected = false); batchForm.value = { date: '', purchaser: '' }; showTemplateModal.value = true; };
+        // 套版資料改為「開啟時才載入」，首頁回應體積大幅縮小
+        const openTemplateModal = async () => {
+          batchForm.value = { date: '', purchaser: '' };
+          showTemplateModal.value = true;
+
+          if (templateData.value.length > 0) {
+            templateData.value.forEach(t => t.selected = false);
+            return;
+          }
+
+          templateLoading.value = true;
+          try {
+            const url = GAS_URL + '?mode=templates&event=' + encodeURIComponent(currentEvent.value);
+            const data = await fetchJson(url);
+            templateData.value = (data.templates || []).map(t => ({ ...t, selected: false }));
+          } catch (e) {
+            console.error(e);
+            alert('套版載入失敗：' + e.message);
+          } finally {
+            templateLoading.value = false;
+          }
+        };
 
         const openSpModal = () => {
           spForm.value.date = options.value.dates[0] || '';
@@ -524,96 +614,88 @@
 
           if (!spForm.value.date) return;
           const matches = secondPayments.value.filter(sp => sp['購買日'] === spForm.value.date);
-          
+
           if (matches.length > 0) {
             spForm.value.common.type = matches[0]['類型'] || '代購';
             spForm.value.common.store = matches[0]['商家名稱'] || '';
             spForm.value.common.remark = matches[0]['備註'] || '';
           }
-
           matches.forEach(m => {
-             if (spForm.value.amounts[m['購買人']] !== undefined) {
-               spForm.value.amounts[m['購買人']] = Number(m['二補費用(TWD)']) || 0;
-             }
+            if (spForm.value.amounts[m['購買人']] !== undefined) {
+              spForm.value.amounts[m['購買人']] = Number(m['二補費用(TWD)']) || 0;
+            }
           });
         };
 
-        const sendPostRequest = async (payload) => {
-          isLoading.value = true;
-          payload.eventName = currentEvent.value;
-          try {
-            // ⚠️ 拿掉 no-cors，才能真的知道成功或失敗
-            const res = await fetch(GAS_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(payload)
-            });
-            const text = await res.text();
-            if (text.trim().startsWith('<')) throw new Error('後端回傳錯誤頁，請檢查部署設定');
-        
-            const data = JSON.parse(text);
-            if (data.status !== 'success') throw new Error(data.message || '未知錯誤');
-        
-            await fetchData();   // 確認寫入成功後才重新讀取，取代原本的 setTimeout 1500
-          } catch (err) {
-            isLoading.value = false;
-            alert('儲存失敗：' + err.message + '\n資料可能未寫入，請重新整理確認。');
-          }
-        };
-        const saveItem = async () => { await sendPostRequest({ ...form.value, action: modalAction.value }); showModal.value = false; };
-        const deleteItem = async (id) => { if(!confirm('確定要刪除這筆紀錄嗎？')) return; await sendPostRequest({ action: 'delete', id: id }); };
-        const submitBatchDelete = async () => { if (!confirm(`確定要一口氣刪除選取的 ${selectedIds.value.length} 筆嗎？`)) return; await sendPostRequest({ action: 'batchDelete', ids: selectedIds.value }); selectedIds.value = []; };
-        const submitBatchAdd = async () => {
-          const selectedItems = templateData.value.filter(t => t.selected).map(t => ({ itemId: t.編號, itemName: t.商品名稱, photoUrl: t.照片, krwPrice: t.韓元價格, player: t.選手 }));
-          await sendPostRequest({ action: 'batchAdd', items: selectedItems, date: batchForm.value.date, purchaser: batchForm.value.purchaser });
-          showTemplateModal.value = false;
-        };
-        const submitBatchEdit = async () => {
-          await sendPostRequest({ action: 'batchUpdate', ids: selectedIds.value, date: batchEditForm.value.date, purchaser: batchEditForm.value.purchaser, exchangeRate: batchEditForm.value.exchangeRate, fee: batchEditForm.value.fee, krwPrice: batchEditForm.value.krwPrice, isPaid: batchEditForm.value.isPaid, isProxy: batchEditForm.value.isProxy });
-          showBatchEditModal.value = false;
-          batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '', isProxy: '' };
-          selectedIds.value = [];
+        /* ---------- 動作 ---------- */
+
+        const saveItem = async () => {
+          const ok = await sendPostRequest({ ...form.value, action: modalAction.value });
+          if (ok) showModal.value = false;
         };
 
-        // 💡 升級：存檔時加入「樂觀更新」，防止使用者按太快導致資料消失
-        const saveSpRecords = async () => {
-          const recordsToSave = [];
-          for (const [purchaser, amount] of Object.entries(spForm.value.amounts)) { 
-            recordsToSave.push({ 
-                purchaser: purchaser, 
-                amount: amount,
-                type: spForm.value.common.type,
-                store: spForm.value.common.store,
-                remark: spForm.value.common.remark
-            }); 
-            
-            // 寫入前端暫存 (樂觀更新)
-            let existingIdx = secondPayments.value.findIndex(sp => sp['場次/月份'] === currentEvent.value && sp['購買日'] === spForm.value.date && sp['購買人'] === purchaser);
-            if (existingIdx !== -1) {
-              secondPayments.value[existingIdx]['二補費用(TWD)'] = amount;
-              secondPayments.value[existingIdx]['類型'] = spForm.value.common.type;
-              secondPayments.value[existingIdx]['商家名稱'] = spForm.value.common.store;
-              secondPayments.value[existingIdx]['備註'] = spForm.value.common.remark;
-            } else {
-              secondPayments.value.push({
-                '場次/月份': currentEvent.value, '購買日': spForm.value.date, '購買人': purchaser,
-                '二補費用(TWD)': amount, '類型': spForm.value.common.type, '商家名稱': spForm.value.common.store, '備註': spForm.value.common.remark
-              });
-            }
+        const deleteItem = async (id) => {
+          if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+          await sendPostRequest({ action: 'delete', id: id });
+        };
+
+        const submitBatchDelete = async () => {
+          if (!confirm('確定要一口氣刪除選取的 ' + selectedIds.value.length + ' 筆嗎？')) return;
+          const ids = [...selectedIds.value];
+          await sendPostRequest({ action: 'batchDelete', ids: ids });
+        };
+
+        const submitBatchAdd = async () => {
+          const selectedItems = templateData.value.filter(t => t.selected).map(t => ({
+            itemId: t.編號, itemName: t.商品名稱, photoUrl: t.照片, krwPrice: t.韓元價格, player: t.選手
+          }));
+          const ok = await sendPostRequest({
+            action: 'batchAdd', items: selectedItems,
+            date: batchForm.value.date, purchaser: batchForm.value.purchaser
+          });
+          if (ok) showTemplateModal.value = false;
+        };
+
+        const submitBatchEdit = async () => {
+          const ok = await sendPostRequest({
+            action: 'batchUpdate', ids: [...selectedIds.value],
+            date: batchEditForm.value.date, purchaser: batchEditForm.value.purchaser,
+            exchangeRate: batchEditForm.value.exchangeRate, fee: batchEditForm.value.fee,
+            krwPrice: batchEditForm.value.krwPrice, isPaid: batchEditForm.value.isPaid,
+            isProxy: batchEditForm.value.isProxy
+          });
+          if (ok) {
+            showBatchEditModal.value = false;
+            batchEditForm.value = { date: '', purchaser: '', exchangeRate: '', fee: '', krwPrice: '', isPaid: '', isProxy: '' };
           }
-          await sendPostRequest({ action: 'saveSecondPayments', date: spForm.value.date, records: recordsToSave });
-          showSpModal.value = false;
+        };
+
+        // 已移除「樂觀更新」：sendPostRequest 會等後端確認後重新讀取，
+        // 前端再手動塞資料只會造成畫面與試算表不一致。
+        const saveSpRecords = async () => {
+          const recordsToSave = Object.entries(spForm.value.amounts).map(([purchaser, amount]) => ({
+            purchaser: purchaser,
+            amount: Number(amount) || 0,
+            type: spForm.value.common.type,
+            store: spForm.value.common.store,
+            remark: spForm.value.common.remark
+          }));
+          const ok = await sendPostRequest({
+            action: 'saveSecondPayments', date: spForm.value.date, records: recordsToSave
+          });
+          if (ok) showSpModal.value = false;
         };
 
         onMounted(fetchData);
 
-        return { 
-          events, currentEvent, thresholds, giftThreshold, photoCardCount, 
+        return {
+          events, currentEvent, thresholds, giftThreshold, photoCardCount,
           showSpModal, spForm, loadSpForDate, openSpModal, saveSpRecords,
-          isLoading, list, sortByItemAndPlayer, filteredList, filters, options, filteredTotal, pendingTotal, filteredKrwTotal,
+          isLoading, loadingText, list, sortByItemAndPlayer, filteredList, filters, options,
+          filteredTotal, pendingTotal, filteredKrwTotal,
           showModal, modalAction, form, openModal, saveItem, deleteItem, submitBatchDelete,
-          templateData, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
-          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd, 
+          templateData, templateLoading, showTemplateModal, openTemplateModal, selectedTemplateCount, submitBatchAdd, batchForm,
+          selectedIds, isAllSelected, toggleAll, showBatchEditModal, batchEditForm, submitBatchEdit, getItemTwd,
           fetchData, changeMonth
         };
       }
